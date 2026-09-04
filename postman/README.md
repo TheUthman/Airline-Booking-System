@@ -4,8 +4,8 @@ This directory contains the Postman Collection and Environment files covering ev
 
 ## Files
 
-- [Airline_Booking_System.postman_collection.json](file:///c:/Users/USCHIP/Documents/Airline-Booking-System/postman/Airline_Booking_System.postman_collection.json): Comprehensive Postman Collection (v2.1.0) with automated test scripts and pre-request scripts.
-- [Airline_Booking_System.postman_environment.json](file:///c:/Users/USCHIP/Documents/Airline-Booking-System/postman/Airline_Booking_System.postman_environment.json): Environment configuration for local development.
+- [Airline_Booking_System.postman_collection.json](Airline_Booking_System.postman_collection.json): Comprehensive Postman Collection (v2.1.0) with automated test scripts and pre-request scripts.
+- [Airline_Booking_System.postman_environment.json](Airline_Booking_System.postman_environment.json): Environment configuration for local development.
 
 ---
 
@@ -13,16 +13,16 @@ This directory contains the Postman Collection and Environment files covering ev
 
 All calls are routed through the **API Gateway** on port `8080` (or `{{baseUrl}}`):
 
-| Service | Port (Direct) | Gateway Path | Role Required |
-| --- | --- | --- | --- |
-| API Gateway & Actuator | `8080` | `/actuator/**`, `/fallback/**` | Public |
-| Auth Service | `8082` | `/api/auth/**` | Public (Register, Login, Refresh) |
-| Flight Service | `8083` | `/api/flights/**` (Search, Get)<br>`/api/flights/admin/**` | Public<br>`ROLE_ADMIN` |
-| Passenger Service | `8084` | `/api/passengers/**` | `ROLE_PASSENGER` / Authenticated |
-| Booking Service | `8085` | `/api/bookings/**` | `ROLE_PASSENGER` / Authenticated |
-| Payment Service | `8086` | `/api/payments/initiate`<br>`/api/payments/webhook` | Authenticated<br>Webhook Secret Header |
-| Notification Service | `8087` | `/api/notifications/**` | `ROLE_PASSENGER` / Authenticated |
-| Admin Service | `8088` | `/api/admin/**` | `ROLE_ADMIN` |
+| Service                | Port (Direct) | Gateway Path                                               | Role Required                          |
+| ---------------------- | ------------- | ---------------------------------------------------------- | -------------------------------------- |
+| API Gateway & Actuator | `8080`        | `/actuator/**`, `/fallback/**`                             | Public                                 |
+| Auth Service           | `8082`        | `/api/auth/**`                                             | Public (Register, Login, Refresh)      |
+| Flight Service         | `8083`        | `/api/flights/**` (Search, Get)<br>`/api/flights/admin/**` | Public<br>`ROLE_ADMIN`                 |
+| Passenger Service      | `8084`        | `/api/passengers/**`                                       | `ROLE_PASSENGER` / Authenticated       |
+| Booking Service        | `8085`        | `/api/bookings/**`                                         | `ROLE_PASSENGER` / Authenticated       |
+| Payment Service        | `8086`        | `/api/payments/initiate`<br>`/api/payments/webhook`        | Authenticated<br>Webhook Secret Header |
+| Notification Service   | `8087`        | `/api/notifications/**`                                    | `ROLE_PASSENGER` / Authenticated       |
+| Admin Service          | `8088`        | `/api/admin/**`                                            | `ROLE_ADMIN`                           |
 
 ---
 

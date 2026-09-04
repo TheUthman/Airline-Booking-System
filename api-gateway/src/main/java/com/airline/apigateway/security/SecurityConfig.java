@@ -97,6 +97,10 @@ public class SecurityConfig {
                                                                 .requestMatchers("/actuator/**")
                                                                 .permitAll()
 
+                                                                // Public circuit-breaker fallback endpoint
+                                                                .requestMatchers("/fallback/**")
+                                                                .permitAll()
+
                                                                 // Everything else
                                                                 .anyRequest()
                                                                 .authenticated())

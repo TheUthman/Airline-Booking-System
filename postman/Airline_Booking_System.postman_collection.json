@@ -28,12 +28,12 @@
     },
     {
       "key": "adminEmail",
-      "value": "admin@example.com",
+      "value": "admin@airline.com",
       "type": "string"
     },
     {
       "key": "adminPassword",
-      "value": "AdminSecret123!",
+      "value": "Admin123!",
       "type": "string"
     },
     {
@@ -103,7 +103,7 @@
     },
     {
       "key": "flightDate",
-      "value": "2026-09-01",
+      "value": "",
       "type": "string"
     }
   ],
@@ -260,7 +260,7 @@
                   "",
                   "pm.test(\"Response indicates validation errors\", function () {",
                   "    const data = pm.response.json();",
-                  "    pm.expect(data).to.have.property(\"error\");",
+                  "    pm.expect(data).to.have.property(\"error\").that.is.a(\"string\").and.not.empty;",
                   "});"
                 ]
               }
@@ -358,7 +358,61 @@
           "response": []
         },
         {
-          "name": "1.5 Login Invalid Credentials (Negative - 401)",
+          "name": "1.5 Login Admin User (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Admin login returns an ADMIN token\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.token).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(data.role).to.eql(\"ADMIN\");",
+                  "    pm.collectionVariables.set(\"adminToken\", data.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate the bootstrapped admin account and store {{adminToken}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Login Invalid Credentials (Negative - 401)",
           "event": [
             {
               "listen": "test",
@@ -541,27 +595,21 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 403) {",
-                  "    pm.test(\"Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs\", function() {",
-                  "        pm.expect(pm.response.code).to.eql(403);",
-                  "    });",
-                  "} else {",
-                  "    pm.test(\"Status code is 201 Created\", function () {",
-                  "        pm.response.to.have.status(201);",
-                  "    });",
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
                   "",
-                  "    pm.test(\"Flight created with ID and details\", function () {",
-                  "        const data = pm.response.json();",
-                  "        pm.expect(data).to.have.property(\"id\").that.is.a(\"number\");",
-                  "        pm.expect(data).to.have.property(\"flightNumber\");",
-                  "        pm.expect(data.origin).to.eql(\"LOS\");",
-                  "        pm.expect(data.destination).to.eql(\"ABV\");",
-                  "        pm.expect(data.availableSeats).to.eql(120);",
-                  "        ",
-                  "        pm.collectionVariables.set(\"flightId\", data.id);",
-                  "        pm.collectionVariables.set(\"flightNumber\", data.flightNumber);",
-                  "    });",
-                  "}"
+                  "pm.test(\"Flight created with ID and details\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(data).to.have.property(\"flightNumber\");",
+                  "    pm.expect(data.origin).to.eql(\"LOS\");",
+                  "    pm.expect(data.destination).to.eql(\"ABV\");",
+                  "    pm.expect(data.availableSeats).to.eql(120);",
+                  "",
+                  "    pm.collectionVariables.set(\"flightId\", data.id);",
+                  "    pm.collectionVariables.set(\"flightNumber\", data.flightNumber);",
+                  "});"
                 ]
               }
             }
@@ -592,7 +640,7 @@
             "description": "Create a new flight schedule as an Admin. Extracts {{flightId}} and {{flightNumber}}.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"flightNumber\": \"{{newFlightNumber}}\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"2026-09-01T08:00:00\",\n  \"arrivalTime\": \"2026-09-01T09:15:00\",\n  \"fare\": 185.5,\n  \"availableSeats\": 120\n}",
+              "raw": "{\n  \"flightNumber\": \"{{newFlightNumber}}\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"{{flightDate}}T08:00:00\",\n  \"arrivalTime\": \"{{flightDate}}T09:15:00\",\n  \"fare\": 185.5,\n  \"availableSeats\": 120\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -643,7 +691,7 @@
             "description": "Ensure non-admin users (PASSENGER role) cannot access admin flight endpoints.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"flightNumber\": \"UNAUTH-999\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"2026-09-01T10:00:00\",\n  \"arrivalTime\": \"2026-09-01T11:00:00\",\n  \"fare\": 100.0,\n  \"availableSeats\": 50\n}",
+              "raw": "{\n  \"flightNumber\": \"UNAUTH-999\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"{{flightDate}}T10:00:00\",\n  \"arrivalTime\": \"{{flightDate}}T11:00:00\",\n  \"fare\": 100.0,\n  \"availableSeats\": 50\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -661,21 +709,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 403) {",
-                  "    pm.test(\"Admin role required for updating flight\", function() {",
-                  "        pm.expect(pm.response.code).to.eql(403);",
-                  "    });",
-                  "} else {",
-                  "    pm.test(\"Status code is 200 OK\", function () {",
-                  "        pm.response.to.have.status(200);",
-                  "    });",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
                   "",
-                  "    pm.test(\"Updated fields verified\", function () {",
-                  "        const data = pm.response.json();",
-                  "        pm.expect(data.fare).to.eql(195.00);",
-                  "        pm.expect(data.availableSeats).to.eql(110);",
-                  "    });",
-                  "}"
+                  "pm.test(\"Updated fields verified\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.fare).to.eql(195.00);",
+                  "    pm.expect(data.availableSeats).to.eql(110);",
+                  "});"
                 ]
               }
             }
@@ -707,7 +749,7 @@
             "description": "Update departure time, fare, or available seats for an existing flight.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"flightNumber\": \"{{flightNumber}}\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"2026-09-01T08:30:00\",\n  \"arrivalTime\": \"2026-09-01T09:45:00\",\n  \"fare\": 195.0,\n  \"availableSeats\": 110\n}",
+              "raw": "{\n  \"flightNumber\": \"{{flightNumber}}\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"{{flightDate}}T08:30:00\",\n  \"arrivalTime\": \"{{flightDate}}T09:45:00\",\n  \"fare\": 195.0,\n  \"availableSeats\": 110\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -734,19 +776,14 @@
                   "    const flights = pm.response.json();",
                   "    pm.expect(flights).to.be.an(\"array\");",
                   "    ",
-                  "    if (flights.length > 0) {",
-                  "        const flight = flights[0];",
-                  "        pm.expect(flight).to.have.property(\"id\");",
-                  "        pm.expect(flight).to.have.property(\"flightNumber\");",
-                  "        pm.expect(flight.origin.toUpperCase()).to.eql(\"LOS\");",
-                  "        pm.expect(flight.destination.toUpperCase()).to.eql(\"ABV\");",
-                  "        ",
-                  "        // Cache flight ID if not already saved",
-                  "        if (!pm.collectionVariables.get(\"flightId\")) {",
-                  "            pm.collectionVariables.set(\"flightId\", flight.id);",
-                  "            pm.collectionVariables.set(\"flightNumber\", flight.flightNumber);",
-                  "        }",
-                  "    }",
+                  "    pm.expect(flights.length, \"At least one matching flight is required\").to.be.above(0);",
+                  "    const flight = flights[0];",
+                  "    pm.expect(flight).to.have.property(\"id\");",
+                  "    pm.expect(flight).to.have.property(\"flightNumber\");",
+                  "    pm.expect(flight.origin.toUpperCase()).to.eql(\"LOS\");",
+                  "    pm.expect(flight.destination.toUpperCase()).to.eql(\"ABV\");",
+                  "    pm.collectionVariables.set(\"flightId\", flight.id);",
+                  "    pm.collectionVariables.set(\"flightNumber\", flight.flightNumber);",
                   "});"
                 ]
               }
@@ -756,7 +793,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/flights/search?origin=LOS&destination=ABV&date=2026-09-01&passengers=1",
+              "raw": "{{baseUrl}}/api/flights/search?origin=LOS&destination=ABV&date={{flightDate}}&passengers=1",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -776,7 +813,7 @@
                 },
                 {
                   "key": "date",
-                  "value": "2026-09-01"
+                  "value": "{{flightDate}}"
                 },
                 {
                   "key": "passengers",
@@ -807,7 +844,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/flights/search?origin=TOOLONG&destination=X&date=2026-09-01",
+              "raw": "{{baseUrl}}/api/flights/search?origin=TOOLONG&destination=X&date={{flightDate}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -827,7 +864,7 @@
                 },
                 {
                   "key": "date",
-                  "value": "2026-09-01"
+                  "value": "{{flightDate}}"
                 }
               ]
             },
@@ -843,23 +880,17 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 404) {",
-                  "    pm.test(\"Flight ID not found (expected if no flights seeded yet)\", function() {",
-                  "        pm.expect(pm.response.code).to.eql(404);",
-                  "    });",
-                  "} else {",
-                  "    pm.test(\"Status code is 200 OK\", function () {",
-                  "        pm.response.to.have.status(200);",
-                  "    });",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
                   "",
-                  "    pm.test(\"Flight object details matched\", function () {",
-                  "        const data = pm.response.json();",
-                  "        pm.expect(data).to.have.property(\"id\");",
-                  "        pm.expect(data).to.have.property(\"flightNumber\");",
-                  "        pm.expect(data).to.have.property(\"fare\");",
-                  "        pm.expect(data).to.have.property(\"availableSeats\");",
-                  "    });",
-                  "}"
+                  "pm.test(\"Flight object details matched\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"id\");",
+                  "    pm.expect(data).to.have.property(\"flightNumber\");",
+                  "    pm.expect(data).to.have.property(\"fare\");",
+                  "    pm.expect(data).to.have.property(\"availableSeats\");",
+                  "});"
                 ]
               }
             }
@@ -1259,8 +1290,9 @@
                   "pm.collectionVariables.set(\"selectedSeat\", seatNum);",
                   "pm.variables.set(\"dynamicSeat\", seatNum);",
                   "",
-                  "const flightIdVal = pm.collectionVariables.get(\"flightId\") || 1;",
-                  "const passIdVal = pm.collectionVariables.get(\"passengerId\") || 1;",
+                  "const flightIdVal = pm.collectionVariables.get(\"flightId\");",
+                  "const passIdVal = pm.collectionVariables.get(\"passengerId\");",
+                  "if (!flightIdVal || !passIdVal) throw new Error(\"Run the flight and passenger setup tests first\");",
                   "pm.variables.set(\"reqFlightId\", flightIdVal);",
                   "pm.variables.set(\"reqPassengerId\", passIdVal);"
                 ]
@@ -1332,8 +1364,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const flightIdVal = pm.collectionVariables.get(\"flightId\") || 1;",
-                  "const passIdVal = pm.collectionVariables.get(\"passengerId\") || 1;",
+                  "const flightIdVal = pm.collectionVariables.get(\"flightId\");",
+                  "const passIdVal = pm.collectionVariables.get(\"passengerId\");",
+                  "const selectedSeat = pm.collectionVariables.get(\"selectedSeat\");",
+                  "if (!flightIdVal || !passIdVal || !selectedSeat) throw new Error(\"Run booking setup first\");",
                   "pm.variables.set(\"reqFlightId\", flightIdVal);",
                   "pm.variables.set(\"reqPassengerId\", passIdVal);"
                 ]
@@ -1459,9 +1493,8 @@
                   "    pm.expect(bookings.length).to.be.at.least(1);",
                   "    ",
                   "    const current = bookings.find(b => b.id === pm.collectionVariables.get(\"bookingId\"));",
-                  "    if (current) {",
-                  "        pm.expect(current.pnr).to.eql(pm.collectionVariables.get(\"pnr\"));",
-                  "    }",
+                  "    pm.expect(current, \"The booking created by the setup test must be listed\").to.exist;",
+                  "    pm.expect(current.pnr).to.eql(pm.collectionVariables.get(\"pnr\"));",
                   "});"
                 ]
               }
@@ -1543,6 +1576,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "// First create a temporary booking to cancel so main test flow isn't disturbed",
+                  "const flightId = pm.collectionVariables.get(\"flightId\");",
+                  "const passengerId = pm.collectionVariables.get(\"passengerId\");",
+                  "if (!flightId || !passengerId) throw new Error(\"Run the flight and passenger setup tests first\");",
                   "const seatToCancel = \"29F\";",
                   "pm.sendRequest({",
                   "    url: pm.collectionVariables.get(\"baseUrl\") + \"/api/bookings\",",
@@ -1554,8 +1590,8 @@
                   "    body: {",
                   "        mode: \"raw\",",
                   "        raw: JSON.stringify({",
-                  "            flightId: pm.collectionVariables.get(\"flightId\") || 1,",
-                  "            passengerId: pm.collectionVariables.get(\"passengerId\") || 1,",
+                  "            flightId: flightId,",
+                  "            passengerId: passengerId,",
                   "            seatNumber: seatToCancel,",
                   "            amount: 150.00",
                   "        })",
@@ -1565,7 +1601,7 @@
                   "        const json = res.json();",
                   "        pm.variables.set(\"bookingToCancelId\", json.id);",
                   "    } else {",
-                  "        pm.variables.set(\"bookingToCancelId\", pm.collectionVariables.get(\"bookingId\"));",
+                  "        throw new Error(\"Temporary booking could not be created for cancellation\");",
                   "    }",
                   "});"
                 ]
@@ -1626,7 +1662,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const bookingIdVal = pm.collectionVariables.get(\"bookingId\") || 1;",
+                  "const bookingIdVal = pm.collectionVariables.get(\"bookingId\");",
+                  "if (!bookingIdVal) throw new Error(\"Run the booking setup test first\");",
                   "pm.variables.set(\"payBookingId\", bookingIdVal);"
                 ]
               }
@@ -1741,6 +1778,16 @@
           "name": "5.3 Webhook - Payment Succeeded Callback (Positive)",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const providerReference = pm.collectionVariables.get(\"providerReference\");",
+                  "if (!providerReference) throw new Error(\"Run the payment initiation test first\");"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -1807,7 +1854,7 @@
                   "    body: {",
                   "        mode: \"raw\",",
                   "        raw: JSON.stringify({",
-                  "            bookingId: pm.collectionVariables.get(\"bookingId\") || 1,",
+                  "            bookingId: pm.collectionVariables.get(\"bookingId\"),",
                   "            amount: 50.00",
                   "        })",
                   "    }",
@@ -1815,7 +1862,7 @@
                   "    if (!err && res.code === 201) {",
                   "        pm.variables.set(\"failedProviderRef\", res.json().providerReference);",
                   "    } else {",
-                  "        pm.variables.set(\"failedProviderRef\", pm.collectionVariables.get(\"providerReference\"));",
+                  "        throw new Error(\"Payment intent could not be created for failure webhook test\");",
                   "    }",
                   "});"
                 ]
@@ -2071,22 +2118,16 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 403) {",
-                  "    pm.test(\"Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs\", function() {",
-                  "        pm.expect(pm.response.code).to.eql(403);",
-                  "    });",
-                  "} else {",
-                  "    pm.test(\"Status code is 200 OK\", function () {",
-                  "        pm.response.to.have.status(200);",
-                  "    });",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
                   "",
-                  "    pm.test(\"Dashboard contains service status and audit count\", function () {",
-                  "        const data = pm.response.json();",
-                  "        pm.expect(data).to.have.property(\"service\", \"admin-service\");",
-                  "        pm.expect(data).to.have.property(\"generatedAt\");",
-                  "        pm.expect(data).to.have.property(\"auditActionCount\");",
-                  "    });",
-                  "}"
+                  "pm.test(\"Dashboard contains service status and audit count\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"service\", \"admin-service\");",
+                  "    pm.expect(data).to.have.property(\"generatedAt\");",
+                  "    pm.expect(data).to.have.property(\"auditActionCount\");",
+                  "});"
                 ]
               }
             }
@@ -2160,21 +2201,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 403) {",
-                  "    pm.test(\"Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs\", function() {",
-                  "        pm.expect(pm.response.code).to.eql(403);",
-                  "    });",
-                  "} else {",
-                  "    pm.test(\"Status code is 202 Accepted\", function () {",
-                  "        pm.response.to.have.status(202);",
-                  "    });",
+                  "pm.test(\"Status code is 202 Accepted\", function () {",
+                  "    pm.response.to.have.status(202);",
+                  "});",
                   "",
-                  "    pm.test(\"Audit log response returned with RECORDED status\", function () {",
-                  "        const data = pm.response.json();",
-                  "        pm.expect(data).to.have.property(\"status\", \"RECORDED\");",
-                  "        pm.expect(data).to.have.property(\"requestedBy\");",
-                  "    });",
-                  "}"
+                  "pm.test(\"Audit log response returned with RECORDED status\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"status\", \"RECORDED\");",
+                  "    pm.expect(data).to.have.property(\"requestedBy\");",
+                  "});"
                 ]
               }
             }
@@ -2457,13 +2492,9 @@
                   "pm.test(\"Step 3: Flight search successful (200 OK)\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    const flights = pm.response.json();",
-                  "    if (flights.length > 0) {",
-                  "        pm.collectionVariables.set(\"e2eFlightId\", flights[0].id);",
-                  "        pm.collectionVariables.set(\"e2eFare\", flights[0].fare);",
-                  "    } else {",
-                  "        pm.collectionVariables.set(\"e2eFlightId\", 1);",
-                  "        pm.collectionVariables.set(\"e2eFare\", 150.00);",
-                  "    }",
+                  "    pm.expect(flights.length, \"At least one flight must be available\").to.be.above(0);",
+                  "    pm.collectionVariables.set(\"e2eFlightId\", flights[0].id);",
+                  "    pm.collectionVariables.set(\"e2eFare\", flights[0].fare);",
                   "});"
                 ]
               }
@@ -2473,7 +2504,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/flights/search?origin=LOS&destination=ABV&date=2026-09-01&passengers=1",
+              "raw": "{{baseUrl}}/api/flights/search?origin=LOS&destination=ABV&date={{flightDate}}&passengers=1",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2493,7 +2524,7 @@
                 },
                 {
                   "key": "date",
-                  "value": "2026-09-01"
+                  "value": "{{flightDate}}"
                 },
                 {
                   "key": "passengers",
@@ -2515,9 +2546,13 @@
                 "exec": [
                   "const e2eSeat = \"3\" + [\"A\",\"B\",\"C\",\"D\"][Math.floor(Math.random() * 4)];",
                   "pm.collectionVariables.set(\"e2eSeat\", e2eSeat);",
-                  "pm.variables.set(\"flightIdVal\", pm.collectionVariables.get(\"e2eFlightId\") || 1);",
-                  "pm.variables.set(\"passIdVal\", pm.collectionVariables.get(\"e2ePassengerId\") || 1);",
-                  "pm.variables.set(\"fareVal\", pm.collectionVariables.get(\"e2eFare\") || 150.00);",
+                  "const flightIdVal = pm.collectionVariables.get(\"e2eFlightId\");",
+                  "const passIdVal = pm.collectionVariables.get(\"e2ePassengerId\");",
+                  "const fareVal = pm.collectionVariables.get(\"e2eFare\");",
+                  "if (!flightIdVal || !passIdVal || !fareVal) throw new Error(\"Complete E2E setup before creating a booking\");",
+                  "pm.variables.set(\"flightIdVal\", flightIdVal);",
+                  "pm.variables.set(\"passIdVal\", passIdVal);",
+                  "pm.variables.set(\"fareVal\", fareVal);",
                   "pm.variables.set(\"seatVal\", e2eSeat);"
                 ]
               }
@@ -2581,8 +2616,12 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.variables.set(\"e2eBookId\", pm.collectionVariables.get(\"e2eBookingId\"));",
-                  "pm.variables.set(\"e2eAmt\", pm.collectionVariables.get(\"e2eFare\") || 150.00);"
+                  "const e2eBookingId = pm.collectionVariables.get(\"e2eBookingId\");",
+                  "if (!e2eBookingId) throw new Error(\"E2E booking is missing\");",
+                  "pm.variables.set(\"e2eBookId\", e2eBookingId);",
+                  "const e2eFare = pm.collectionVariables.get(\"e2eFare\");",
+                  "if (!e2eFare) throw new Error(\"E2E fare is missing\");",
+                  "pm.variables.set(\"e2eAmt\", e2eFare);"
                 ]
               }
             },
@@ -2645,7 +2684,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.variables.set(\"e2eProviderRefVal\", pm.collectionVariables.get(\"e2eProviderRef\"));"
+                  "const e2eProviderRef = pm.collectionVariables.get(\"e2eProviderRef\");",
+                  "if (!e2eProviderRef) throw new Error(\"E2E provider reference is missing\");",
+                  "pm.variables.set(\"e2eProviderRefVal\", e2eProviderRef);"
                 ]
               }
             },
@@ -2705,7 +2746,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.variables.set(\"e2eBookingIdVal\", pm.collectionVariables.get(\"e2eBookingId\"));"
+                  "const e2eBookingId = pm.collectionVariables.get(\"e2eBookingId\");",
+                  "if (!e2eBookingId) throw new Error(\"E2E booking is missing\");",
+                  "pm.variables.set(\"e2eBookingIdVal\", e2eBookingId);"
                 ]
               }
             },
@@ -2786,6 +2829,18 @@
           "response": []
         }
       ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);",
+          "pm.collectionVariables.set(\"flightDate\", tomorrow.toISOString().slice(0, 10));"
+        ]
+      }
     }
   ]
 }

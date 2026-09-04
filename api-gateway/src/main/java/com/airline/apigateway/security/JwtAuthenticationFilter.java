@@ -161,6 +161,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return Collections.enumeration(List.of(role));
                 return super.getHeaders(name);
             }
+
+            @Override
+            public java.util.Enumeration<String> getHeaderNames() {
+                java.util.List<String> headerNames = Collections.list(super.getHeaderNames());
+                if (!headerNames.stream().anyMatch(name -> "X-User-Email".equalsIgnoreCase(name)))
+                    headerNames.add("X-User-Email");
+                if (!headerNames.stream().anyMatch(name -> "X-User-Role".equalsIgnoreCase(name)))
+                    headerNames.add("X-User-Role");
+                return Collections.enumeration(headerNames);
+            }
         };
 
         filterChain.doFilter(decoratedRequest, response);

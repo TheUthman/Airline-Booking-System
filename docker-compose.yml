@@ -41,6 +41,12 @@ services:
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_INSTANCE_HOSTNAME: service-registry
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8761/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     depends_on:
       config-server:
         condition: service_healthy
@@ -57,7 +63,7 @@ services:
       config-server:
         condition: service_healthy
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
   auth-service:
     build: { context: ., dockerfile: authservice/Dockerfile }
@@ -74,7 +80,7 @@ services:
       postgres:
         condition: service_started
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
   flight-service:
     build: { context: ., dockerfile: flight-service/Dockerfile }
@@ -85,7 +91,7 @@ services:
       postgres:
         condition: service_started
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
   passenger-service:
     build: { context: ., dockerfile: passenger-service/Dockerfile }
@@ -96,11 +102,11 @@ services:
       postgres:
         condition: service_started
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
   booking-service:
     build: { context: ., dockerfile: booking-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, BOOKING_DB_URL: jdbc:postgresql://postgres:5432/airline_booking, BOOKING_DB_USERNAME: airline, BOOKING_DB_PASSWORD: airline_local_password, REDIS_HOST: redis, RABBITMQ_HOST: rabbitmq }
+    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, BOOKING_DB_URL: jdbc:postgresql://postgres:5432/airline_booking, BOOKING_DB_USERNAME: airline, BOOKING_DB_PASSWORD: airline_local_password, REDIS_HOST: redis, RABBITMQ_HOST: rabbitmq, RABBITMQ_USERNAME: airline, RABBITMQ_PASSWORD: airline_local_password }
     depends_on:
       config-server:
         condition: service_healthy
@@ -111,11 +117,11 @@ services:
       rabbitmq:
         condition: service_started
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
   payment-service:
     build: { context: ., dockerfile: payment-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/airline_payment, PAYMENT_DB_USERNAME: airline, PAYMENT_DB_PASSWORD: airline_local_password, RABBITMQ_HOST: rabbitmq, PAYMENT_WEBHOOK_SECRET: "${PAYMENT_WEBHOOK_SECRET:?Set PAYMENT_WEBHOOK_SECRET in your environment}" }
+    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/airline_payment, PAYMENT_DB_USERNAME: airline, PAYMENT_DB_PASSWORD: airline_local_password, RABBITMQ_HOST: rabbitmq, RABBITMQ_USERNAME: airline, RABBITMQ_PASSWORD: airline_local_password, PAYMENT_WEBHOOK_SECRET: "${PAYMENT_WEBHOOK_SECRET:?Set PAYMENT_WEBHOOK_SECRET in your environment}" }
     depends_on:
       config-server:
         condition: service_healthy
@@ -124,11 +130,11 @@ services:
       rabbitmq:
         condition: service_started
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
   notification-service:
     build: { context: ., dockerfile: notification-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/airline_notification, NOTIFICATION_DB_USERNAME: airline, NOTIFICATION_DB_PASSWORD: airline_local_password, RABBITMQ_HOST: rabbitmq, RESEND_API_KEY: "${RESEND_API_KEY:-}", EMAIL_FROM: "${EMAIL_FROM:-Airline Booking <onboarding@resend.dev>}" }
+    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/airline_notification, NOTIFICATION_DB_USERNAME: airline, NOTIFICATION_DB_PASSWORD: airline_local_password, RABBITMQ_HOST: rabbitmq, RABBITMQ_USERNAME: airline, RABBITMQ_PASSWORD: airline_local_password, RESEND_API_KEY: "${RESEND_API_KEY:-}", EMAIL_FROM: "${EMAIL_FROM:-Airline Booking <onboarding@resend.dev>}" }
     depends_on:
       config-server:
         condition: service_healthy
@@ -137,7 +143,7 @@ services:
       rabbitmq:
         condition: service_started
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
   admin-service:
     build: { context: ., dockerfile: admin-service/Dockerfile }
@@ -148,7 +154,7 @@ services:
       postgres:
         condition: service_started
       service-registry:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
   postgres-data:

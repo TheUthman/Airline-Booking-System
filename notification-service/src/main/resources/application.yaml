@@ -3,7 +3,7 @@ spring:
   config: { import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}" }
   datasource: { url: "${NOTIFICATION_DB_URL:jdbc:h2:file:./data/notification-db;MODE=PostgreSQL;AUTO_SERVER=TRUE}", username: "${NOTIFICATION_DB_USERNAME:sa}", password: "${NOTIFICATION_DB_PASSWORD:}" }
   jpa: { hibernate: { ddl-auto: update }, open-in-view: false }
-  rabbitmq: { host: "${RABBITMQ_HOST:localhost}", port: "${RABBITMQ_PORT:5672}" }
+  rabbitmq: { host: "${RABBITMQ_HOST:localhost}", port: "${RABBITMQ_PORT:5672}", username: "${RABBITMQ_USERNAME:guest}", password: "${RABBITMQ_PASSWORD:guest}" }
 server: { port: 8087 }
 notifications:
   email:

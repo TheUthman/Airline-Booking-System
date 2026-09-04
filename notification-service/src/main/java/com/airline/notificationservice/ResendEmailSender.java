@@ -15,15 +15,12 @@ class ResendEmailSender {
 
     ResendEmailSender(
             @Value("${notifications.email.resend-api-key:}") String apiKey,
-            @Value("${notifications.email.from:Airline Booking <onboarding@resend.dev>}")
-                    String from,
-            RestClient.Builder builder) {
+            @Value("${notifications.email.from:Airline Booking <onboarding@resend.dev>}") String from) {
         this.apiKey = apiKey;
         this.from = from;
-        this.client =
-                builder.baseUrl("https://api.resend.com")
-                        .defaultHeader("User-Agent", "airline-booking-system-school-project")
-                        .build();
+        this.client = RestClient.builder().baseUrl("https://api.resend.com")
+                .defaultHeader("User-Agent", "airline-booking-system-school-project")
+                .build();
     }
 
     void sendPaymentConfirmation(String recipient, long bookingId) {
@@ -39,12 +36,12 @@ class ResendEmailSender {
                                 "from",
                                 from,
                                 "to",
-                                new String[] {recipient},
+                                new String[] { recipient },
                                 "subject",
                                 "Your airline booking is confirmed",
                                 "html",
                                 "<h1>Booking confirmed</h1><p>Your payment was successful. Your"
-                                    + " booking reference is "
+                                        + " booking reference is "
                                         + bookingId
                                         + ".</p>"))
                 .retrieve()

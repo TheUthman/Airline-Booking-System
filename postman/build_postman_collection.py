@@ -13,8 +13,8 @@ collection = {
         {"key": "webhookSecret", "value": "development-webhook-secret", "type": "string"},
         {"key": "userEmail", "value": "passenger.test@example.com", "type": "string"},
         {"key": "userPassword", "value": "Password123!", "type": "string"},
-        {"key": "adminEmail", "value": "admin@example.com", "type": "string"},
-        {"key": "adminPassword", "value": "AdminSecret123!", "type": "string"},
+        {"key": "adminEmail", "value": "admin@airline.com", "type": "string"},
+        {"key": "adminPassword", "value": "Admin123!", "type": "string"},
         {"key": "accessToken", "value": "", "type": "string"},
         {"key": "refreshToken", "value": "", "type": "string"},
         {"key": "adminToken", "value": "", "type": "string"},
@@ -28,7 +28,7 @@ collection = {
         {"key": "providerReference", "value": "", "type": "string"},
         {"key": "flightOrigin", "value": "LOS", "type": "string"},
         {"key": "flightDestination", "value": "ABV", "type": "string"},
-        {"key": "flightDate", "value": "2026-09-01", "type": "string"}
+        {"key": "flightDate", "value": "", "type": "string"}
     ],
     "item": []
 }
@@ -184,7 +184,7 @@ pm.test("Status code is 400 Bad Request", function () {
 
 pm.test("Response indicates validation errors", function () {
     const data = pm.response.json();
-    pm.expect(data).to.have.property("error");
+    pm.expect(data).to.have.property("error").that.is.a("string").and.not.empty;
 });
 """,
             description="Validates that invalid email, blank names, and short passwords (< 8 chars) are rejected with 400."
@@ -218,7 +218,30 @@ pm.test("Login returns valid tokens and user profile", function () {
             description="Authenticate with valid credentials and receive updated access and refresh tokens."
         ),
         create_item(
-            name="1.5 Login Invalid Credentials (Negative - 401)",
+            name="1.5 Login Admin User (Positive)",
+            method="POST",
+            url_path="/api/auth/login",
+            headers=[{"key": "Content-Type", "value": "application/json"}],
+            body={
+                "email": "{{adminEmail}}",
+                "password": "{{adminPassword}}"
+            },
+            test_script="""
+pm.test("Status code is 200 OK", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Admin login returns an ADMIN token", function () {
+    const data = pm.response.json();
+    pm.expect(data.token).to.be.a("string").and.not.empty;
+    pm.expect(data.role).to.eql("ADMIN");
+    pm.collectionVariables.set("adminToken", data.token);
+});
+""",
+            description="Authenticate the bootstrapped admin account and store {{adminToken}}."
+        ),
+        create_item(
+            name="1.6 Login Invalid Credentials (Negative - 401)",
             method="POST",
             url_path="/api/auth/login",
             headers=[{"key": "Content-Type", "value": "application/json"}],
@@ -308,33 +331,27 @@ pm.variables.set("newFlightNumber", flightNum);
                 "flightNumber": "{{newFlightNumber}}",
                 "origin": "LOS",
                 "destination": "ABV",
-                "departureTime": "2026-09-01T08:00:00",
-                "arrivalTime": "2026-09-01T09:15:00",
+                "departureTime": "{{flightDate}}T08:00:00",
+                "arrivalTime": "{{flightDate}}T09:15:00",
                 "fare": 185.50,
                 "availableSeats": 120
             },
             test_script="""
-if (pm.response.code === 403) {
-    pm.test("Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs", function() {
-        pm.expect(pm.response.code).to.eql(403);
-    });
-} else {
-    pm.test("Status code is 201 Created", function () {
-        pm.response.to.have.status(201);
-    });
+pm.test("Status code is 201 Created", function () {
+    pm.response.to.have.status(201);
+});
 
-    pm.test("Flight created with ID and details", function () {
-        const data = pm.response.json();
-        pm.expect(data).to.have.property("id").that.is.a("number");
-        pm.expect(data).to.have.property("flightNumber");
-        pm.expect(data.origin).to.eql("LOS");
-        pm.expect(data.destination).to.eql("ABV");
-        pm.expect(data.availableSeats).to.eql(120);
-        
-        pm.collectionVariables.set("flightId", data.id);
-        pm.collectionVariables.set("flightNumber", data.flightNumber);
-    });
-}
+pm.test("Flight created with ID and details", function () {
+    const data = pm.response.json();
+    pm.expect(data).to.have.property("id").that.is.a("number");
+    pm.expect(data).to.have.property("flightNumber");
+    pm.expect(data.origin).to.eql("LOS");
+    pm.expect(data.destination).to.eql("ABV");
+    pm.expect(data.availableSeats).to.eql(120);
+
+    pm.collectionVariables.set("flightId", data.id);
+    pm.collectionVariables.set("flightNumber", data.flightNumber);
+});
 """,
             description="Create a new flight schedule as an Admin. Extracts {{flightId}} and {{flightNumber}}."
         ),
@@ -350,8 +367,8 @@ if (pm.response.code === 403) {
                 "flightNumber": "UNAUTH-999",
                 "origin": "LOS",
                 "destination": "ABV",
-                "departureTime": "2026-09-01T10:00:00",
-                "arrivalTime": "2026-09-01T11:00:00",
+                "departureTime": "{{flightDate}}T10:00:00",
+                "arrivalTime": "{{flightDate}}T11:00:00",
                 "fare": 100.00,
                 "availableSeats": 50
             },
@@ -374,27 +391,21 @@ pm.test("Status code is 403 Forbidden for non-admin user", function () {
                 "flightNumber": "{{flightNumber}}",
                 "origin": "LOS",
                 "destination": "ABV",
-                "departureTime": "2026-09-01T08:30:00",
-                "arrivalTime": "2026-09-01T09:45:00",
+                "departureTime": "{{flightDate}}T08:30:00",
+                "arrivalTime": "{{flightDate}}T09:45:00",
                 "fare": 195.00,
                 "availableSeats": 110
             },
             test_script="""
-if (pm.response.code === 403) {
-    pm.test("Admin role required for updating flight", function() {
-        pm.expect(pm.response.code).to.eql(403);
-    });
-} else {
-    pm.test("Status code is 200 OK", function () {
-        pm.response.to.have.status(200);
-    });
+pm.test("Status code is 200 OK", function () {
+    pm.response.to.have.status(200);
+});
 
-    pm.test("Updated fields verified", function () {
-        const data = pm.response.json();
-        pm.expect(data.fare).to.eql(195.00);
-        pm.expect(data.availableSeats).to.eql(110);
-    });
-}
+pm.test("Updated fields verified", function () {
+    const data = pm.response.json();
+    pm.expect(data.fare).to.eql(195.00);
+    pm.expect(data.availableSeats).to.eql(110);
+});
 """,
             description="Update departure time, fare, or available seats for an existing flight."
         ),
@@ -405,7 +416,7 @@ if (pm.response.code === 403) {
             query_params=[
                 {"key": "origin", "value": "LOS"},
                 {"key": "destination", "value": "ABV"},
-                {"key": "date", "value": "2026-09-01"},
+                {"key": "date", "value": "{{flightDate}}"},
                 {"key": "passengers", "value": "1"}
             ],
             test_script="""
@@ -418,19 +429,14 @@ pm.test("Returns list of matching flights", function () {
     const flights = pm.response.json();
     pm.expect(flights).to.be.an("array");
     
-    if (flights.length > 0) {
-        const flight = flights[0];
-        pm.expect(flight).to.have.property("id");
-        pm.expect(flight).to.have.property("flightNumber");
-        pm.expect(flight.origin.toUpperCase()).to.eql("LOS");
-        pm.expect(flight.destination.toUpperCase()).to.eql("ABV");
-        
-        // Cache flight ID if not already saved
-        if (!pm.collectionVariables.get("flightId")) {
-            pm.collectionVariables.set("flightId", flight.id);
-            pm.collectionVariables.set("flightNumber", flight.flightNumber);
-        }
-    }
+    pm.expect(flights.length, "At least one matching flight is required").to.be.above(0);
+    const flight = flights[0];
+    pm.expect(flight).to.have.property("id");
+    pm.expect(flight).to.have.property("flightNumber");
+    pm.expect(flight.origin.toUpperCase()).to.eql("LOS");
+    pm.expect(flight.destination.toUpperCase()).to.eql("ABV");
+    pm.collectionVariables.set("flightId", flight.id);
+    pm.collectionVariables.set("flightNumber", flight.flightNumber);
 });
 """,
             description="Public flight search by 3-letter IATA origin/destination, date, and passenger count."
@@ -442,7 +448,7 @@ pm.test("Returns list of matching flights", function () {
             query_params=[
                 {"key": "origin", "value": "TOOLONG"},
                 {"key": "destination", "value": "X"},
-                {"key": "date", "value": "2026-09-01"}
+                {"key": "date", "value": "{{flightDate}}"}
             ],
             test_script="""
 pm.test("Status code is 400 Bad Request", function () {
@@ -456,23 +462,17 @@ pm.test("Status code is 400 Bad Request", function () {
             method="GET",
             url_path="/api/flights/{{flightId}}",
             test_script="""
-if (pm.response.code === 404) {
-    pm.test("Flight ID not found (expected if no flights seeded yet)", function() {
-        pm.expect(pm.response.code).to.eql(404);
-    });
-} else {
-    pm.test("Status code is 200 OK", function () {
-        pm.response.to.have.status(200);
-    });
+pm.test("Status code is 200 OK", function () {
+    pm.response.to.have.status(200);
+});
 
-    pm.test("Flight object details matched", function () {
-        const data = pm.response.json();
-        pm.expect(data).to.have.property("id");
-        pm.expect(data).to.have.property("flightNumber");
-        pm.expect(data).to.have.property("fare");
-        pm.expect(data).to.have.property("availableSeats");
-    });
-}
+pm.test("Flight object details matched", function () {
+    const data = pm.response.json();
+    pm.expect(data).to.have.property("id");
+    pm.expect(data).to.have.property("flightNumber");
+    pm.expect(data).to.have.property("fare");
+    pm.expect(data).to.have.property("availableSeats");
+});
 """,
             description="Fetch flight details by numeric ID."
         ),
@@ -673,8 +673,9 @@ const seatNum = Math.floor(1 + Math.random() * 30) + ["A","B","C","D","E","F"][M
 pm.collectionVariables.set("selectedSeat", seatNum);
 pm.variables.set("dynamicSeat", seatNum);
 
-const flightIdVal = pm.collectionVariables.get("flightId") || 1;
-const passIdVal = pm.collectionVariables.get("passengerId") || 1;
+const flightIdVal = pm.collectionVariables.get("flightId");
+const passIdVal = pm.collectionVariables.get("passengerId");
+if (!flightIdVal || !passIdVal) throw new Error("Run the flight and passenger setup tests first");
 pm.variables.set("reqFlightId", flightIdVal);
 pm.variables.set("reqPassengerId", passIdVal);
 """,
@@ -711,8 +712,10 @@ pm.test("Booking created with PNR and PENDING_PAYMENT status", function () {
                 {"key": "Authorization", "value": "Bearer {{accessToken}}"}
             ],
             pre_script="""
-const flightIdVal = pm.collectionVariables.get("flightId") || 1;
-const passIdVal = pm.collectionVariables.get("passengerId") || 1;
+const flightIdVal = pm.collectionVariables.get("flightId");
+const passIdVal = pm.collectionVariables.get("passengerId");
+const selectedSeat = pm.collectionVariables.get("selectedSeat");
+if (!flightIdVal || !passIdVal || !selectedSeat) throw new Error("Run booking setup first");
 pm.variables.set("reqFlightId", flightIdVal);
 pm.variables.set("reqPassengerId", passIdVal);
 """,
@@ -771,9 +774,8 @@ pm.test("Returns list of bookings ordered by creation date", function () {
     pm.expect(bookings.length).to.be.at.least(1);
     
     const current = bookings.find(b => b.id === pm.collectionVariables.get("bookingId"));
-    if (current) {
-        pm.expect(current.pnr).to.eql(pm.collectionVariables.get("pnr"));
-    }
+    pm.expect(current, "The booking created by the setup test must be listed").to.exist;
+    pm.expect(current.pnr).to.eql(pm.collectionVariables.get("pnr"));
 });
 """,
             description="List all reservations for the authenticated user."
@@ -804,6 +806,9 @@ pm.test("Booking details matched", function () {
             headers=[{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             pre_script="""
 // First create a temporary booking to cancel so main test flow isn't disturbed
+const flightId = pm.collectionVariables.get("flightId");
+const passengerId = pm.collectionVariables.get("passengerId");
+if (!flightId || !passengerId) throw new Error("Run the flight and passenger setup tests first");
 const seatToCancel = "29F";
 pm.sendRequest({
     url: pm.collectionVariables.get("baseUrl") + "/api/bookings",
@@ -815,8 +820,8 @@ pm.sendRequest({
     body: {
         mode: "raw",
         raw: JSON.stringify({
-            flightId: pm.collectionVariables.get("flightId") || 1,
-            passengerId: pm.collectionVariables.get("passengerId") || 1,
+            flightId: flightId,
+            passengerId: passengerId,
             seatNumber: seatToCancel,
             amount: 150.00
         })
@@ -826,7 +831,7 @@ pm.sendRequest({
         const json = res.json();
         pm.variables.set("bookingToCancelId", json.id);
     } else {
-        pm.variables.set("bookingToCancelId", pm.collectionVariables.get("bookingId"));
+        throw new Error("Temporary booking could not be created for cancellation");
     }
 });
 """,
@@ -861,7 +866,8 @@ payments_folder = {
                 {"key": "Authorization", "value": "Bearer {{accessToken}}"}
             ],
             pre_script="""
-const bookingIdVal = pm.collectionVariables.get("bookingId") || 1;
+const bookingIdVal = pm.collectionVariables.get("bookingId");
+if (!bookingIdVal) throw new Error("Run the booking setup test first");
 pm.variables.set("payBookingId", bookingIdVal);
 """,
             body={
@@ -910,6 +916,10 @@ pm.test("Status code is 401 Unauthorized", function () {
                 {"key": "Content-Type", "value": "application/json"},
                 {"key": "X-Payment-Webhook-Secret", "value": "{{webhookSecret}}"}
             ],
+            pre_script="""
+const providerReference = pm.collectionVariables.get("providerReference");
+if (!providerReference) throw new Error("Run the payment initiation test first");
+""",
             body={
                 "providerReference": "{{providerReference}}",
                 "succeeded": True
@@ -941,7 +951,7 @@ pm.sendRequest({
     body: {
         mode: "raw",
         raw: JSON.stringify({
-            bookingId: pm.collectionVariables.get("bookingId") || 1,
+            bookingId: pm.collectionVariables.get("bookingId"),
             amount: 50.00
         })
     }
@@ -949,7 +959,7 @@ pm.sendRequest({
     if (!err && res.code === 201) {
         pm.variables.set("failedProviderRef", res.json().providerReference);
     } else {
-        pm.variables.set("failedProviderRef", pm.collectionVariables.get("providerReference"));
+        throw new Error("Payment intent could not be created for failure webhook test");
     }
 });
 """,
@@ -1062,22 +1072,16 @@ admin_folder = {
             url_path="/api/admin/dashboard",
             headers=[{"key": "Authorization", "value": "Bearer {{adminToken}}"}],
             test_script="""
-if (pm.response.code === 403) {
-    pm.test("Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs", function() {
-        pm.expect(pm.response.code).to.eql(403);
-    });
-} else {
-    pm.test("Status code is 200 OK", function () {
-        pm.response.to.have.status(200);
-    });
+pm.test("Status code is 200 OK", function () {
+    pm.response.to.have.status(200);
+});
 
-    pm.test("Dashboard contains service status and audit count", function () {
-        const data = pm.response.json();
-        pm.expect(data).to.have.property("service", "admin-service");
-        pm.expect(data).to.have.property("generatedAt");
-        pm.expect(data).to.have.property("auditActionCount");
-    });
-}
+pm.test("Dashboard contains service status and audit count", function () {
+    const data = pm.response.json();
+    pm.expect(data).to.have.property("service", "admin-service");
+    pm.expect(data).to.have.property("generatedAt");
+    pm.expect(data).to.have.property("auditActionCount");
+});
 """,
             description="Operations dashboard endpoint protected by ROLE_ADMIN."
         ),
@@ -1107,21 +1111,15 @@ pm.test("Status code is 403 Forbidden", function () {
                 "operator": "Postman Automated Test"
             },
             test_script="""
-if (pm.response.code === 403) {
-    pm.test("Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs", function() {
-        pm.expect(pm.response.code).to.eql(403);
-    });
-} else {
-    pm.test("Status code is 202 Accepted", function () {
-        pm.response.to.have.status(202);
-    });
+pm.test("Status code is 202 Accepted", function () {
+    pm.response.to.have.status(202);
+});
 
-    pm.test("Audit log response returned with RECORDED status", function () {
-        const data = pm.response.json();
-        pm.expect(data).to.have.property("status", "RECORDED");
-        pm.expect(data).to.have.property("requestedBy");
-    });
-}
+pm.test("Audit log response returned with RECORDED status", function () {
+    const data = pm.response.json();
+    pm.expect(data).to.have.property("status", "RECORDED");
+    pm.expect(data).to.have.property("requestedBy");
+});
 """,
             description="Record an operational audit action into Admin Service DB."
         )
@@ -1243,20 +1241,16 @@ pm.test("Step 2: Traveller profile created (201 Created)", function () {
             query_params=[
                 {"key": "origin", "value": "LOS"},
                 {"key": "destination", "value": "ABV"},
-                {"key": "date", "value": "2026-09-01"},
+                {"key": "date", "value": "{{flightDate}}"},
                 {"key": "passengers", "value": "1"}
             ],
             test_script="""
 pm.test("Step 3: Flight search successful (200 OK)", function () {
     pm.response.to.have.status(200);
     const flights = pm.response.json();
-    if (flights.length > 0) {
-        pm.collectionVariables.set("e2eFlightId", flights[0].id);
-        pm.collectionVariables.set("e2eFare", flights[0].fare);
-    } else {
-        pm.collectionVariables.set("e2eFlightId", 1);
-        pm.collectionVariables.set("e2eFare", 150.00);
-    }
+    pm.expect(flights.length, "At least one flight must be available").to.be.above(0);
+    pm.collectionVariables.set("e2eFlightId", flights[0].id);
+    pm.collectionVariables.set("e2eFare", flights[0].fare);
 });
 """
         ),
@@ -1271,9 +1265,13 @@ pm.test("Step 3: Flight search successful (200 OK)", function () {
             pre_script="""
 const e2eSeat = "3" + ["A","B","C","D"][Math.floor(Math.random() * 4)];
 pm.collectionVariables.set("e2eSeat", e2eSeat);
-pm.variables.set("flightIdVal", pm.collectionVariables.get("e2eFlightId") || 1);
-pm.variables.set("passIdVal", pm.collectionVariables.get("e2ePassengerId") || 1);
-pm.variables.set("fareVal", pm.collectionVariables.get("e2eFare") || 150.00);
+const flightIdVal = pm.collectionVariables.get("e2eFlightId");
+const passIdVal = pm.collectionVariables.get("e2ePassengerId");
+const fareVal = pm.collectionVariables.get("e2eFare");
+if (!flightIdVal || !passIdVal || !fareVal) throw new Error("Complete E2E setup before creating a booking");
+pm.variables.set("flightIdVal", flightIdVal);
+pm.variables.set("passIdVal", passIdVal);
+pm.variables.set("fareVal", fareVal);
 pm.variables.set("seatVal", e2eSeat);
 """,
             body={
@@ -1301,8 +1299,12 @@ pm.test("Step 4: Booking created with seat lock (201 Created)", function () {
                 {"key": "Authorization", "value": "Bearer {{e2eToken}}"}
             ],
             pre_script="""
-pm.variables.set("e2eBookId", pm.collectionVariables.get("e2eBookingId"));
-pm.variables.set("e2eAmt", pm.collectionVariables.get("e2eFare") || 150.00);
+const e2eBookingId = pm.collectionVariables.get("e2eBookingId");
+if (!e2eBookingId) throw new Error("E2E booking is missing");
+pm.variables.set("e2eBookId", e2eBookingId);
+const e2eFare = pm.collectionVariables.get("e2eFare");
+if (!e2eFare) throw new Error("E2E fare is missing");
+pm.variables.set("e2eAmt", e2eFare);
 """,
             body={
                 "bookingId": "{{e2eBookId}}",
@@ -1326,7 +1328,9 @@ pm.test("Step 5: Payment intent initiated (201 Created)", function () {
                 {"key": "X-Payment-Webhook-Secret", "value": "{{webhookSecret}}"}
             ],
             pre_script="""
-pm.variables.set("e2eProviderRefVal", pm.collectionVariables.get("e2eProviderRef"));
+const e2eProviderRef = pm.collectionVariables.get("e2eProviderRef");
+if (!e2eProviderRef) throw new Error("E2E provider reference is missing");
+pm.variables.set("e2eProviderRefVal", e2eProviderRef);
 """,
             body={
                 "providerReference": "{{e2eProviderRefVal}}",
@@ -1344,7 +1348,9 @@ pm.test("Step 6: Webhook accepted and processed (200 OK)", function () {
             url_path="/api/bookings/{{e2eBookingIdVal}}",
             headers=[{"key": "Authorization", "value": "Bearer {{e2eToken}}"}],
             pre_script="""
-pm.variables.set("e2eBookingIdVal", pm.collectionVariables.get("e2eBookingId"));
+const e2eBookingId = pm.collectionVariables.get("e2eBookingId");
+if (!e2eBookingId) throw new Error("E2E booking is missing");
+pm.variables.set("e2eBookingIdVal", e2eBookingId);
 """,
             test_script="""
 pm.test("Step 7: Verified booking details (200 OK)", function () {
@@ -1381,6 +1387,16 @@ collection["item"] = [
     system_folder,
     e2e_folder
 ]
+collection["event"] = [{
+    "listen": "prerequest",
+    "script": {
+        "type": "text/javascript",
+        "exec": [
+            "const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);",
+            "pm.collectionVariables.set(\"flightDate\", tomorrow.toISOString().slice(0, 10));"
+        ]
+    }
+}]
 
 # Write collection file
 output_path = os.path.join("postman", "Airline_Booking_System.postman_collection.json")
@@ -1396,21 +1412,9 @@ environment = {
     "values": [
         {"key": "baseUrl", "value": "http://localhost:8080", "type": "default", "enabled": True},
         {"key": "webhookSecret", "value": "development-webhook-secret", "type": "default", "enabled": True},
-        {"key": "userEmail", "value": "testuser@airline.test", "type": "default", "enabled": True},
         {"key": "userPassword", "value": "Password123!", "type": "secret", "enabled": True},
-        {"key": "adminEmail", "value": "admin@airline.test", "type": "default", "enabled": True},
-        {"key": "adminPassword", "value": "AdminSecret123!", "type": "secret", "enabled": True},
-        {"key": "accessToken", "value": "", "type": "secret", "enabled": True},
-        {"key": "refreshToken", "value": "", "type": "secret", "enabled": True},
-        {"key": "adminToken", "value": "", "type": "secret", "enabled": True},
-        {"key": "userId", "value": "", "type": "default", "enabled": True},
-        {"key": "passengerId", "value": "", "type": "default", "enabled": True},
-        {"key": "flightId", "value": "", "type": "default", "enabled": True},
-        {"key": "flightNumber", "value": "", "type": "default", "enabled": True},
-        {"key": "bookingId", "value": "", "type": "default", "enabled": True},
-        {"key": "pnr", "value": "", "type": "default", "enabled": True},
-        {"key": "paymentId", "value": "", "type": "default", "enabled": True},
-        {"key": "providerReference", "value": "", "type": "default", "enabled": True}
+        {"key": "adminEmail", "value": "admin@airline.com", "type": "default", "enabled": True},
+        {"key": "adminPassword", "value": "Admin123!", "type": "secret", "enabled": True},
     ],
     "_postman_variable_scope": "environment"
 }

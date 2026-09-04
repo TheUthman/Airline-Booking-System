@@ -1,0 +1,632 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Airline Booking System API - Automated Test Suite" tests="49" time="22.913">
+  <testsuite name="01 - Authentication Service (/api/auth) / 1.1 Register Passenger Account (Positive)" id="f53013d1-8f91-46d6-9f57-c785f6aed192" timestamp="2026-09-04T12:34:02.636Z" tests="3" failures="0" errors="0" time="0.677">
+    <testcase name="Status code is 201 Created" time="0.677" classname="01AuthenticationServiceApiAuth11RegisterPassengerAccountPositive"/>
+    <testcase name="Response is JSON with auth tokens" time="0.677" classname="01AuthenticationServiceApiAuth11RegisterPassengerAccountPositive"/>
+    <testcase name="Response time is under 1500ms" time="0.677" classname="01AuthenticationServiceApiAuth11RegisterPassengerAccountPositive"/>
+  </testsuite>
+  <testsuite name="01 - Authentication Service (/api/auth) / 1.2 Register Duplicate Email (Negative - 400)" id="2afa5962-ad5f-413f-b215-3e76bdc57b72" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.152">
+    <testcase name="Status code is 400 Bad Request" time="0.152" classname="01AuthenticationServiceApiAuth12RegisterDuplicateEmailNegative400"/>
+    <testcase name="Response contains error message about existing account" time="0.152" classname="01AuthenticationServiceApiAuth12RegisterDuplicateEmailNegative400"/>
+  </testsuite>
+  <testsuite name="01 - Authentication Service (/api/auth) / 1.3 Register Validation Failure - Short Password (Negative - 400)" id="b7dc9134-7f0e-446d-b591-0bd1f3e3510e" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="0" time="0.127">
+    <testcase name="Status code is 400 Bad Request" time="0.127" classname="01AuthenticationServiceApiAuth13RegisterValidationFailureShortPasswordNegative400">
+      <failure type="AssertionFailure" message="expected response to have status code 400 but got 403">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 01 - Authentication Service (/api/auth) / 1.3 Register Validation Failure - Short Password (Negative - 400).]]>
+        <![CDATA[Test description: Status code is 400 Bad Request.]]>
+        <![CDATA[Error message: expected response to have status code 400 but got 403.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 400 but got 403
+   at Object.eval sandbox-script.js:1:3).]]>
+      </failure>
+    </testcase>
+    <testcase name="Response indicates validation errors" time="0.127" classname="01AuthenticationServiceApiAuth13RegisterValidationFailureShortPasswordNegative400">
+      <failure type="AssertionFailure" message="No data, empty input at 1:1&#xA;&#xA;^">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 01 - Authentication Service (/api/auth) / 1.3 Register Validation Failure - Short Password (Negative - 400).]]>
+        <![CDATA[Test description: Response indicates validation errors.]]>
+        <![CDATA[Error message: No data, empty input at 1:1
+
+^.]]>
+        <![CDATA[Stacktrace: JSONError: No data, empty input at 1:1
+
+^
+   at Object.eval sandbox-script.js:2:3).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="01 - Authentication Service (/api/auth) / 1.4 Login User (Positive)" id="321a7b4a-609b-401f-bf6b-240d1c97fbae" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="5.632">
+    <testcase name="Status code is 200 OK" time="5.632" classname="01AuthenticationServiceApiAuth14LoginUserPositive"/>
+    <testcase name="Login returns valid tokens and user profile" time="5.632" classname="01AuthenticationServiceApiAuth14LoginUserPositive"/>
+  </testsuite>
+  <testsuite name="01 - Authentication Service (/api/auth) / 1.5 Login Admin User (Positive)" id="88d96cc9-a135-423f-902b-454cc3f2dbb4" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.668">
+    <testcase name="Status code is 200 OK" time="0.668" classname="01AuthenticationServiceApiAuth15LoginAdminUserPositive"/>
+    <testcase name="Admin login returns an ADMIN token" time="0.668" classname="01AuthenticationServiceApiAuth15LoginAdminUserPositive"/>
+  </testsuite>
+  <testsuite name="01 - Authentication Service (/api/auth) / 1.6 Login Invalid Credentials (Negative - 401)" id="42cb3292-cded-49f7-9c9d-2c23059bd7d8" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="1" errors="0" time="0.573">
+    <testcase name="Status code is 401 Unauthorized" time="0.573" classname="01AuthenticationServiceApiAuth16LoginInvalidCredentialsNegative401"/>
+    <testcase name="Error message mentions invalid credentials" time="0.573" classname="01AuthenticationServiceApiAuth16LoginInvalidCredentialsNegative401">
+      <failure type="AssertionFailure" message="expected 'Unauthorized' to include 'Invalid email or password'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 01 - Authentication Service (/api/auth) / 1.6 Login Invalid Credentials (Negative - 401).]]>
+        <![CDATA[Test description: Error message mentions invalid credentials.]]>
+        <![CDATA[Error message: expected 'Unauthorized' to include 'Invalid email or password'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected 'Unauthorized' to include 'Invalid email or password'
+   at Object.eval sandbox-script.js:2:6).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="01 - Authentication Service (/api/auth) / 1.6 Refresh Access Token (Positive)" id="641525dd-1602-4250-8d07-ff47a76a1b89" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="1" errors="0" time="1.180">
+    <testcase name="Status code is 200 OK" time="1.180" classname="01AuthenticationServiceApiAuth16RefreshAccessTokenPositive"/>
+    <testcase name="New access token is returned" time="1.180" classname="01AuthenticationServiceApiAuth16RefreshAccessTokenPositive">
+      <failure type="AssertionFailure" message="expected 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0cmF2…' to deeply equal 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0cmF2…'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 01 - Authentication Service (/api/auth) / 1.6 Refresh Access Token (Positive).]]>
+        <![CDATA[Test description: New access token is returned.]]>
+        <![CDATA[Error message: expected 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0cmF2…' to deeply equal 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0cmF2…'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0cmF2…' to deeply equal 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0cmF2…'
+   at Object.eval sandbox-script.js:2:7).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="01 - Authentication Service (/api/auth) / 1.7 Refresh Token with Invalid Token (Negative - 401)" id="62b111d5-b1cd-478a-905b-f3e75a66eca3" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="1" errors="0" time="0.343">
+    <testcase name="Status code is 401 Unauthorized" time="0.343" classname="01AuthenticationServiceApiAuth17RefreshTokenWithInvalidTokenNegative401"/>
+    <testcase name="Error details indicate invalid refresh token" time="0.343" classname="01AuthenticationServiceApiAuth17RefreshTokenWithInvalidTokenNegative401">
+      <failure type="AssertionFailure" message="expected 'Unauthorized' to include 'Invalid refresh token'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 01 - Authentication Service (/api/auth) / 1.7 Refresh Token with Invalid Token (Negative - 401).]]>
+        <![CDATA[Test description: Error details indicate invalid refresh token.]]>
+        <![CDATA[Error message: expected 'Unauthorized' to include 'Invalid refresh token'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected 'Unauthorized' to include 'Invalid refresh token'
+   at Object.eval sandbox-script.js:2:8).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="02 - Flight Service (/api/flights) / 2.1 Admin - Create Scheduled Flight (Positive)" id="f1262573-b2cb-4c4f-9b91-b4865c5f800a" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="0" time="0.054">
+    <testcase name="Status code is 201 Created" time="0.054" classname="02FlightServiceApiFlights21AdminCreateScheduledFlightPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 201 but got 500">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.1 Admin - Create Scheduled Flight (Positive).]]>
+        <![CDATA[Test description: Status code is 201 Created.]]>
+        <![CDATA[Error message: expected response to have status code 201 but got 500.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 201 but got 500
+   at Object.eval sandbox-script.js:1:9).]]>
+      </failure>
+    </testcase>
+    <testcase name="Flight created with ID and details" time="0.054" classname="02FlightServiceApiFlights21AdminCreateScheduledFlightPositive">
+      <failure type="AssertionFailure" message="expected { …(4) } to have property 'id'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.1 Admin - Create Scheduled Flight (Positive).]]>
+        <![CDATA[Test description: Flight created with ID and details.]]>
+        <![CDATA[Error message: expected { …(4) } to have property 'id'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected { …(4) } to have property 'id'
+   at Object.eval sandbox-script.js:2:9).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="02 - Flight Service (/api/flights) / 2.2 Admin - Create Flight As Passenger (Negative - 403)" id="67b4db8b-5b95-4662-9efe-6c18b38984d8" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.054">
+    <testcase name="Status code is 403 Forbidden for non-admin user" time="0.054" classname="02FlightServiceApiFlights22AdminCreateFlightAsPassengerNegative403"/>
+  </testsuite>
+  <testsuite name="02 - Flight Service (/api/flights) / 2.3 Admin - Update Flight Schedule (Positive)" id="fdbf60f2-210a-43bd-9154-e7d9fa18afae" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="0" time="0.380">
+    <testcase name="Status code is 200 OK" time="0.380" classname="02FlightServiceApiFlights23AdminUpdateFlightSchedulePositive">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 500">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.3 Admin - Update Flight Schedule (Positive).]]>
+        <![CDATA[Test description: Status code is 200 OK.]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 500.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 500
+   at Object.eval sandbox-script.js:1:11).]]>
+      </failure>
+    </testcase>
+    <testcase name="Updated fields verified" time="0.380" classname="02FlightServiceApiFlights23AdminUpdateFlightSchedulePositive">
+      <failure type="AssertionFailure" message="expected undefined to deeply equal 195">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.3 Admin - Update Flight Schedule (Positive).]]>
+        <![CDATA[Test description: Updated fields verified.]]>
+        <![CDATA[Error message: expected undefined to deeply equal 195.]]>
+        <![CDATA[Stacktrace: AssertionError: expected undefined to deeply equal 195
+   at Object.eval sandbox-script.js:2:11).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="02 - Flight Service (/api/flights) / 2.4 Search Flights (Public - Positive)" id="c85ca7fe-c649-4a94-a41e-1b58c8a6cac3" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="0" time="0.065">
+    <testcase name="Status code is 200 OK" time="0.065" classname="02FlightServiceApiFlights24SearchFlightsPublicPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 500">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.4 Search Flights (Public - Positive).]]>
+        <![CDATA[Test description: Status code is 200 OK.]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 500.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 500
+   at Object.eval sandbox-script.js:1:12).]]>
+      </failure>
+    </testcase>
+    <testcase name="Returns list of matching flights" time="0.065" classname="02FlightServiceApiFlights24SearchFlightsPublicPositive">
+      <failure type="AssertionFailure" message="expected { …(4) } to be an array">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.4 Search Flights (Public - Positive).]]>
+        <![CDATA[Test description: Returns list of matching flights.]]>
+        <![CDATA[Error message: expected { …(4) } to be an array.]]>
+        <![CDATA[Stacktrace: AssertionError: expected { …(4) } to be an array
+   at Object.eval sandbox-script.js:2:12).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="02 - Flight Service (/api/flights) / 2.5 Search Flights Invalid IATA Code (Negative - 400)" id="9a0f73a2-6f3c-404e-856c-d84974630678" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="0" time="0.041">
+    <testcase name="Status code is 400 Bad Request" time="0.041" classname="02FlightServiceApiFlights25SearchFlightsInvalidIataCodeNegative400">
+      <failure type="AssertionFailure" message="expected response to have status code 400 but got 500">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.5 Search Flights Invalid IATA Code (Negative - 400).]]>
+        <![CDATA[Test description: Status code is 400 Bad Request.]]>
+        <![CDATA[Error message: expected response to have status code 400 but got 500.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 400 but got 500
+   at Object.eval sandbox-script.js:1:13).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="02 - Flight Service (/api/flights) / 2.6 Get Flight by ID (Public - Positive)" id="7ac9e63e-87bf-4fc7-9dd7-3aa749e9d286" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="0" time="0.054">
+    <testcase name="Status code is 200 OK" time="0.054" classname="02FlightServiceApiFlights26GetFlightByIdPublicPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 500">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.6 Get Flight by ID (Public - Positive).]]>
+        <![CDATA[Test description: Status code is 200 OK.]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 500.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 500
+   at Object.eval sandbox-script.js:1:14).]]>
+      </failure>
+    </testcase>
+    <testcase name="Flight object details matched" time="0.054" classname="02FlightServiceApiFlights26GetFlightByIdPublicPositive">
+      <failure type="AssertionFailure" message="expected { …(4) } to have property 'id'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.6 Get Flight by ID (Public - Positive).]]>
+        <![CDATA[Test description: Flight object details matched.]]>
+        <![CDATA[Error message: expected { …(4) } to have property 'id'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected { …(4) } to have property 'id'
+   at Object.eval sandbox-script.js:2:14).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="02 - Flight Service (/api/flights) / 2.7 Get Non-existent Flight by ID (Negative - 404)" id="06083f50-0766-4c55-9ca2-f847c17565d3" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="0" time="0.048">
+    <testcase name="Status code is 404 Not Found" time="0.048" classname="02FlightServiceApiFlights27GetNonExistentFlightByIdNegative404">
+      <failure type="AssertionFailure" message="expected response to have status code 404 but got 500">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.7 Get Non-existent Flight by ID (Negative - 404).]]>
+        <![CDATA[Test description: Status code is 404 Not Found.]]>
+        <![CDATA[Error message: expected response to have status code 404 but got 500.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 404 but got 500
+   at Object.eval sandbox-script.js:1:15).]]>
+      </failure>
+    </testcase>
+    <testcase name="Error payload has standard format" time="0.048" classname="02FlightServiceApiFlights27GetNonExistentFlightByIdNegative404">
+      <failure type="AssertionFailure" message="expected { …(4) } to have property 'status' of 404, but got 500">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 02 - Flight Service (/api/flights) / 2.7 Get Non-existent Flight by ID (Negative - 404).]]>
+        <![CDATA[Test description: Error payload has standard format.]]>
+        <![CDATA[Error message: expected { …(4) } to have property 'status' of 404, but got 500.]]>
+        <![CDATA[Stacktrace: AssertionError: expected { …(4) } to have property 'status' of 404, but got 500
+   at Object.eval sandbox-script.js:2:15).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="03 - Passenger Service (/api/passengers) / 3.1 Create Traveller Profile (Positive)" id="3feb77dd-4b13-4d49-a1b7-1cc4cb03cc81" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.087">
+    <testcase name="Status code is 201 Created" time="0.087" classname="03PassengerServiceApiPassengers31CreateTravellerProfilePositive"/>
+    <testcase name="Passenger created with ID and owner email" time="0.087" classname="03PassengerServiceApiPassengers31CreateTravellerProfilePositive"/>
+  </testsuite>
+  <testsuite name="03 - Passenger Service (/api/passengers) / 3.2 Create Traveller Without Auth Token (Negative - 401)" id="22fb2d54-d457-4c97-b439-e3131868d3bb" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.014">
+    <testcase name="Status code is 401 Unauthorized" time="0.014" classname="03PassengerServiceApiPassengers32CreateTravellerWithoutAuthTokenNegative401"/>
+  </testsuite>
+  <testsuite name="03 - Passenger Service (/api/passengers) / 3.3 Create Traveller Validation Error - Future DOB (Negative - 400)" id="a2f3c8aa-3d5d-4138-8884-59e05aa9fc41" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.093">
+    <testcase name="Status code is 400 Bad Request" time="0.093" classname="03PassengerServiceApiPassengers33CreateTravellerValidationErrorFutureDobNegative400"/>
+  </testsuite>
+  <testsuite name="03 - Passenger Service (/api/passengers) / 3.4 Get My Travellers (Positive)" id="47e8f3c2-bd00-4fe2-8d03-7cfd2ad0eafd" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.586">
+    <testcase name="Status code is 200 OK" time="0.586" classname="03PassengerServiceApiPassengers34GetMyTravellersPositive"/>
+    <testcase name="Returns list of travellers for logged in user" time="0.586" classname="03PassengerServiceApiPassengers34GetMyTravellersPositive"/>
+  </testsuite>
+  <testsuite name="03 - Passenger Service (/api/passengers) / 3.5 Update Traveller Profile (Positive)" id="606f5d5f-349c-4f6d-9819-533467c0addf" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.413">
+    <testcase name="Status code is 200 OK" time="0.413" classname="03PassengerServiceApiPassengers35UpdateTravellerProfilePositive"/>
+    <testcase name="Traveller profile successfully updated" time="0.413" classname="03PassengerServiceApiPassengers35UpdateTravellerProfilePositive"/>
+  </testsuite>
+  <testsuite name="03 - Passenger Service (/api/passengers) / 3.6 Update Non-existent Traveller (Negative - 404)" id="73cc7735-c03e-4de6-9c20-ce4bfc168709" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.140">
+    <testcase name="Status code is 404 Not Found" time="0.140" classname="03PassengerServiceApiPassengers36UpdateNonExistentTravellerNegative404"/>
+  </testsuite>
+  <testsuite name="04 - Booking Service (/api/bookings) / 4.1 Create Booking &amp; Acquire Seat Lock (Positive)" id="32cee42f-dbde-4859-b123-286a3bf4d5ab" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="1" time="0.099">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: Run the flight and passenger setup tests first
+---
+]]></system-err>
+    <testcase name="Status code is 201 Created" time="0.099" classname="04BookingServiceApiBookings41CreateBookingAmpAcquireSeatLockPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 201 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.1 Create Booking & Acquire Seat Lock (Positive).]]>
+        <![CDATA[Test description: Status code is 201 Created.]]>
+        <![CDATA[Error message: expected response to have status code 201 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 201 but got 400
+   at Object.eval sandbox-script.js:1:22).]]>
+      </failure>
+    </testcase>
+    <testcase name="Booking created with PNR and PENDING_PAYMENT status" time="0.099" classname="04BookingServiceApiBookings41CreateBookingAmpAcquireSeatLockPositive">
+      <failure type="AssertionFailure" message="expected { …(4) } to have property 'id'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.1 Create Booking & Acquire Seat Lock (Positive).]]>
+        <![CDATA[Test description: Booking created with PNR and PENDING_PAYMENT status.]]>
+        <![CDATA[Error message: expected { …(4) } to have property 'id'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected { …(4) } to have property 'id'
+   at Object.eval sandbox-script.js:2:22).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="04 - Booking Service (/api/bookings) / 4.2 Create Booking Duplicate Seat Lock (Negative - 409 Conflict)" id="9219e43e-e9d0-4022-b27e-86c386b5c9f9" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="1" time="0.141">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: Run booking setup first
+---
+]]></system-err>
+    <testcase name="Status code is 409 Conflict" time="0.141" classname="04BookingServiceApiBookings42CreateBookingDuplicateSeatLockNegative409Conflict">
+      <failure type="AssertionFailure" message="expected response to have status code 409 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.2 Create Booking Duplicate Seat Lock (Negative - 409 Conflict).]]>
+        <![CDATA[Test description: Status code is 409 Conflict.]]>
+        <![CDATA[Error message: expected response to have status code 409 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 409 but got 400
+   at Object.eval sandbox-script.js:1:23).]]>
+      </failure>
+    </testcase>
+    <testcase name="Conflict reason specifies seat is locked" time="0.141" classname="04BookingServiceApiBookings42CreateBookingDuplicateSeatLockNegative409Conflict">
+      <failure type="AssertionFailure" message="expected '{&quot;timestamp&quot;:&quot;2026-09-04T12:34:20.016…' to include 'currently being selected'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.2 Create Booking Duplicate Seat Lock (Negative - 409 Conflict).]]>
+        <![CDATA[Test description: Conflict reason specifies seat is locked.]]>
+        <![CDATA[Error message: expected '{"timestamp":"2026-09-04T12:34:20.016…' to include 'currently being selected'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected '{"timestamp":"2026-09-04T12:34:20.016…' to include 'currently being selected'
+   at Object.eval sandbox-script.js:2:23).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="04 - Booking Service (/api/bookings) / 4.3 Create Booking Invalid Seat Number Format (Negative - 400)" id="2a321b7a-e2a6-418c-9600-8d107370a7c6" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.086">
+    <testcase name="Status code is 400 Bad Request" time="0.086" classname="04BookingServiceApiBookings43CreateBookingInvalidSeatNumberFormatNegative400"/>
+  </testsuite>
+  <testsuite name="04 - Booking Service (/api/bookings) / 4.4 Get My Bookings (Positive)" id="b62e3dc9-06f8-46d6-b638-e56b67158fdb" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="1" errors="0" time="0.452">
+    <testcase name="Status code is 200 OK" time="0.452" classname="04BookingServiceApiBookings44GetMyBookingsPositive"/>
+    <testcase name="Returns list of bookings ordered by creation date" time="0.452" classname="04BookingServiceApiBookings44GetMyBookingsPositive">
+      <failure type="AssertionFailure" message="expected +0 to be at least 1">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.4 Get My Bookings (Positive).]]>
+        <![CDATA[Test description: Returns list of bookings ordered by creation date.]]>
+        <![CDATA[Error message: expected +0 to be at least 1.]]>
+        <![CDATA[Stacktrace: AssertionError: expected +0 to be at least 1
+   at Object.eval sandbox-script.js:2:25).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="04 - Booking Service (/api/bookings) / 4.5 Get Booking by ID (Positive)" id="0949dfbe-7171-4891-b00d-92da39b51435" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="0" time="0.065">
+    <testcase name="Status code is 200 OK" time="0.065" classname="04BookingServiceApiBookings45GetBookingByIdPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 404">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.5 Get Booking by ID (Positive).]]>
+        <![CDATA[Test description: Status code is 200 OK.]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 404.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 404
+   at Object.eval sandbox-script.js:1:26).]]>
+      </failure>
+    </testcase>
+    <testcase name="Booking details matched" time="0.065" classname="04BookingServiceApiBookings45GetBookingByIdPositive">
+      <failure type="AssertionFailure" message="expected undefined to deeply equal ''">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.5 Get Booking by ID (Positive).]]>
+        <![CDATA[Test description: Booking details matched.]]>
+        <![CDATA[Error message: expected undefined to deeply equal ''.]]>
+        <![CDATA[Stacktrace: AssertionError: expected undefined to deeply equal ''
+   at Object.eval sandbox-script.js:2:26).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="04 - Booking Service (/api/bookings) / 4.6 Cancel Pending Booking (Positive)" id="d2953b47-51b4-4eb7-8e03-cc409e3c1143" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="1" time="0.098">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: Run the flight and passenger setup tests first
+---
+]]></system-err>
+    <testcase name="Status code is 200 OK" time="0.098" classname="04BookingServiceApiBookings46CancelPendingBookingPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.6 Cancel Pending Booking (Positive).]]>
+        <![CDATA[Test description: Status code is 200 OK.]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 400
+   at Object.eval sandbox-script.js:1:27).]]>
+      </failure>
+    </testcase>
+    <testcase name="Booking status changed to CANCELLED" time="0.098" classname="04BookingServiceApiBookings46CancelPendingBookingPositive">
+      <failure type="AssertionFailure" message="expected 400 to deeply equal 'CANCELLED'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 04 - Booking Service (/api/bookings) / 4.6 Cancel Pending Booking (Positive).]]>
+        <![CDATA[Test description: Booking status changed to CANCELLED.]]>
+        <![CDATA[Error message: expected 400 to deeply equal 'CANCELLED'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected 400 to deeply equal 'CANCELLED'
+   at Object.eval sandbox-script.js:2:27).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="05 - Payment Service (/api/payments) / 5.1 Initiate Payment (Positive)" id="f13451d1-6464-4ec2-a312-e199fccf177f" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="2" errors="1" time="0.177">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: Run the booking setup test first
+---
+]]></system-err>
+    <testcase name="Status code is 201 Created" time="0.177" classname="05PaymentServiceApiPayments51InitiatePaymentPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 201 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 05 - Payment Service (/api/payments) / 5.1 Initiate Payment (Positive).]]>
+        <![CDATA[Test description: Status code is 201 Created.]]>
+        <![CDATA[Error message: expected response to have status code 201 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 201 but got 400
+   at Object.eval sandbox-script.js:1:28).]]>
+      </failure>
+    </testcase>
+    <testcase name="Payment intent created with providerReference and PENDING status" time="0.177" classname="05PaymentServiceApiPayments51InitiatePaymentPositive">
+      <failure type="AssertionFailure" message="expected { …(4) } to have property 'id'">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 05 - Payment Service (/api/payments) / 5.1 Initiate Payment (Positive).]]>
+        <![CDATA[Test description: Payment intent created with providerReference and PENDING status.]]>
+        <![CDATA[Error message: expected { …(4) } to have property 'id'.]]>
+        <![CDATA[Stacktrace: AssertionError: expected { …(4) } to have property 'id'
+   at Object.eval sandbox-script.js:2:28).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="05 - Payment Service (/api/payments) / 5.2 Initiate Payment Without Auth (Negative - 401)" id="33d766ff-cc44-4207-99e2-d95717a7097c" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.042">
+    <testcase name="Status code is 401 Unauthorized" time="0.042" classname="05PaymentServiceApiPayments52InitiatePaymentWithoutAuthNegative401"/>
+  </testsuite>
+  <testsuite name="05 - Payment Service (/api/payments) / 5.3 Webhook - Payment Succeeded Callback (Positive)" id="00417dfb-2b4d-46b0-880f-bcc0fc1e3f39" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="1" time="0.698">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: Run the payment initiation test first
+---
+]]></system-err>
+    <testcase name="Status code is 200 OK" time="0.698" classname="05PaymentServiceApiPayments53WebhookPaymentSucceededCallbackPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 05 - Payment Service (/api/payments) / 5.3 Webhook - Payment Succeeded Callback (Positive).]]>
+        <![CDATA[Test description: Status code is 200 OK.]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 400
+   at Object.eval sandbox-script.js:1:30).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="05 - Payment Service (/api/payments) / 5.4 Webhook - Payment Failed Callback (Positive)" id="03b52a49-b198-4b79-900f-ec0a430ae24c" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="2" errors="0" time="0.160">
+    <testcase name="Status code is 200 OK" time="0.160" classname="05PaymentServiceApiPayments54WebhookPaymentFailedCallbackPositive">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 401">
+        <![CDATA[Failed 2 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 05 - Payment Service (/api/payments) / 5.4 Webhook - Payment Failed Callback (Positive).]]>
+        <![CDATA[Test description: Status code is 200 OK.]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 401.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 401
+   at Object.eval sandbox-script.js:1:31).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="05 - Payment Service (/api/payments) / 5.5 Webhook - Invalid Secret (Negative - 401)" id="04b52d78-5ece-48b4-911a-795c6cf75bdb" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="0" time="4.463">
+    <testcase name="Status code is 401 Unauthorized" time="4.463" classname="05PaymentServiceApiPayments55WebhookInvalidSecretNegative401">
+      <failure type="AssertionFailure" message="expected response to have status code 401 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 05 - Payment Service (/api/payments) / 5.5 Webhook - Invalid Secret (Negative - 401).]]>
+        <![CDATA[Test description: Status code is 401 Unauthorized.]]>
+        <![CDATA[Error message: expected response to have status code 401 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 401 but got 400
+   at Object.eval sandbox-script.js:1:32).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="05 - Payment Service (/api/payments) / 5.6 Webhook - Non-existent Payment Ref (Negative - 404)" id="567f5c41-199a-4435-a586-415ec51402db" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="0" time="0.313">
+    <testcase name="Status code is 404 Not Found" time="0.313" classname="05PaymentServiceApiPayments56WebhookNonExistentPaymentRefNegative404">
+      <failure type="AssertionFailure" message="expected response to have status code 404 but got 401">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 05 - Payment Service (/api/payments) / 5.6 Webhook - Non-existent Payment Ref (Negative - 404).]]>
+        <![CDATA[Test description: Status code is 404 Not Found.]]>
+        <![CDATA[Error message: expected response to have status code 404 but got 401.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 404 but got 401
+   at Object.eval sandbox-script.js:1:33).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="06 - Notification Service (/api/notifications) / 6.1 Get My Notification Delivery Logs (Positive)" id="71f3b47e-ea66-444f-a650-358dd0a08e14" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="1.509">
+    <testcase name="Status code is 200 OK" time="1.509" classname="06NotificationServiceApiNotifications61GetMyNotificationDeliveryLogsPositive"/>
+    <testcase name="Response is a list of delivery logs" time="1.509" classname="06NotificationServiceApiNotifications61GetMyNotificationDeliveryLogsPositive"/>
+  </testsuite>
+  <testsuite name="06 - Notification Service (/api/notifications) / 6.2 Get Notifications Without Auth (Negative - 401)" id="7b153146-1f33-4f97-b470-7d0a9531c88f" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.104">
+    <testcase name="Status code is 401 Unauthorized" time="0.104" classname="06NotificationServiceApiNotifications62GetNotificationsWithoutAuthNegative401"/>
+  </testsuite>
+  <testsuite name="07 - Admin Service (/api/admin) / 7.1 Get Operations Dashboard (Positive - Admin)" id="5e0b9b96-c9af-4b33-8dc7-2317b53732bf" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.435">
+    <testcase name="Status code is 200 OK" time="0.435" classname="07AdminServiceApiAdmin71GetOperationsDashboardPositiveAdmin"/>
+    <testcase name="Dashboard contains service status and audit count" time="0.435" classname="07AdminServiceApiAdmin71GetOperationsDashboardPositiveAdmin"/>
+  </testsuite>
+  <testsuite name="07 - Admin Service (/api/admin) / 7.2 Get Operations Dashboard As Passenger (Negative - 403)" id="d6585ed3-38ba-4d30-b5a6-d8bcc020fdd9" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.033">
+    <testcase name="Status code is 403 Forbidden" time="0.033" classname="07AdminServiceApiAdmin72GetOperationsDashboardAsPassengerNegative403"/>
+  </testsuite>
+  <testsuite name="07 - Admin Service (/api/admin) / 7.3 Record Operational Action (Positive - Admin)" id="cb4f17fb-8335-49e1-be24-026e89ef7995" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.261">
+    <testcase name="Status code is 202 Accepted" time="0.261" classname="07AdminServiceApiAdmin73RecordOperationalActionPositiveAdmin"/>
+    <testcase name="Audit log response returned with RECORDED status" time="0.261" classname="07AdminServiceApiAdmin73RecordOperationalActionPositiveAdmin"/>
+  </testsuite>
+  <testsuite name="08 - Gateway Fallback &amp; Actuator / 8.1 Flight Service Fallback Handler" id="bd061705-cbf7-4855-a83a-5d773a3ebd1f" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.012">
+    <testcase name="Status code is 503 Service Unavailable" time="0.012" classname="08GatewayFallbackAmpActuator81FlightServiceFallbackHandler"/>
+    <testcase name="Fallback error response format" time="0.012" classname="08GatewayFallbackAmpActuator81FlightServiceFallbackHandler"/>
+  </testsuite>
+  <testsuite name="08 - Gateway Fallback &amp; Actuator / 8.2 Actuator Health" id="b3a7323b-6cbf-4bb7-9327-d8c2edc4c206" timestamp="2026-09-04T12:34:02.636Z" tests="2" failures="0" errors="0" time="0.279">
+    <testcase name="Status code is 200 OK" time="0.279" classname="08GatewayFallbackAmpActuator82ActuatorHealth"/>
+    <testcase name="Application status is UP" time="0.279" classname="08GatewayFallbackAmpActuator82ActuatorHealth"/>
+  </testsuite>
+  <testsuite name="08 - Gateway Fallback &amp; Actuator / 8.3 Actuator Info" id="8d0c1efc-da3a-4214-a09e-bed6f8056ed1" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.083">
+    <testcase name="Status code is 200 OK" time="0.083" classname="08GatewayFallbackAmpActuator83ActuatorInfo"/>
+  </testsuite>
+  <testsuite name="09 - E2E Complete Booking Journey Flow / Step 1: E2E - Register User" id="0f702f06-221b-4804-8b3f-366bb81c3475" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="1.117">
+    <testcase name="Step 1: User registered (201 Created)" time="1.117" classname="09E2ECompleteBookingJourneyFlowStep1E2ERegisterUser"/>
+  </testsuite>
+  <testsuite name="09 - E2E Complete Booking Journey Flow / Step 2: E2E - Create Traveller Profile" id="b06a72ed-ede8-419a-88ab-8e53b409c601" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.138">
+    <testcase name="Step 2: Traveller profile created (201 Created)" time="0.138" classname="09E2ECompleteBookingJourneyFlowStep2E2ECreateTravellerProfile"/>
+  </testsuite>
+  <testsuite name="09 - E2E Complete Booking Journey Flow / Step 3: E2E - Search Flights" id="b4c26f31-56c9-4879-91c9-d11710059de6" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="0" time="0.220">
+    <testcase name="Step 3: Flight search successful (200 OK)" time="0.220" classname="09E2ECompleteBookingJourneyFlowStep3E2ESearchFlights">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 500">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 09 - E2E Complete Booking Journey Flow / Step 3: E2E - Search Flights.]]>
+        <![CDATA[Test description: Step 3: Flight search successful (200 OK).]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 500.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 500
+   at Object.eval sandbox-script.js:1:44).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="09 - E2E Complete Booking Journey Flow / Step 4: E2E - Create Booking with Seat Lock" id="919ef78d-1276-4a94-b251-655bf6bb6bde" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="1" time="0.075">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: Complete E2E setup before creating a booking
+---
+]]></system-err>
+    <testcase name="Step 4: Booking created with seat lock (201 Created)" time="0.075" classname="09E2ECompleteBookingJourneyFlowStep4E2ECreateBookingWithSeatLock">
+      <failure type="AssertionFailure" message="expected response to have status code 201 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 09 - E2E Complete Booking Journey Flow / Step 4: E2E - Create Booking with Seat Lock.]]>
+        <![CDATA[Test description: Step 4: Booking created with seat lock (201 Created).]]>
+        <![CDATA[Error message: expected response to have status code 201 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 201 but got 400
+   at Object.eval sandbox-script.js:1:45).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="09 - E2E Complete Booking Journey Flow / Step 5: E2E - Initiate Payment Intent" id="fb7c1bbd-bd68-4d0f-87ca-d4a81e338937" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="1" time="0.095">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: E2E booking is missing
+---
+]]></system-err>
+    <testcase name="Step 5: Payment intent initiated (201 Created)" time="0.095" classname="09E2ECompleteBookingJourneyFlowStep5E2EInitiatePaymentIntent">
+      <failure type="AssertionFailure" message="expected response to have status code 201 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 09 - E2E Complete Booking Journey Flow / Step 5: E2E - Initiate Payment Intent.]]>
+        <![CDATA[Test description: Step 5: Payment intent initiated (201 Created).]]>
+        <![CDATA[Error message: expected response to have status code 201 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 201 but got 400
+   at Object.eval sandbox-script.js:1:46).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="09 - E2E Complete Booking Journey Flow / Step 6: E2E - Provider Webhook Succeeded Callback" id="cd7f3ca3-11c0-4491-a633-4891da65e503" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="1" time="0.071">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: E2E provider reference is missing
+---
+]]></system-err>
+    <testcase name="Step 6: Webhook accepted and processed (200 OK)" time="0.071" classname="09E2ECompleteBookingJourneyFlowStep6E2EProviderWebhookSucceededCallback">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 401">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 09 - E2E Complete Booking Journey Flow / Step 6: E2E - Provider Webhook Succeeded Callback.]]>
+        <![CDATA[Test description: Step 6: Webhook accepted and processed (200 OK).]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 401.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 401
+   at Object.eval sandbox-script.js:1:47).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="09 - E2E Complete Booking Journey Flow / Step 7: E2E - Verify Booking Status" id="616bf9f0-364d-40dc-b00d-3e8282dfa8fb" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="1" errors="1" time="0.059">
+    <system-err><![CDATA[Iteration: 0
+
+---
+prerequestScriptError: E2E booking is missing
+---
+]]></system-err>
+    <testcase name="Step 7: Verified booking details (200 OK)" time="0.059" classname="09E2ECompleteBookingJourneyFlowStep7E2EVerifyBookingStatus">
+      <failure type="AssertionFailure" message="expected response to have status code 200 but got 400">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 9b12e345-6789-40ab-bcde-f123456789ab.]]>
+        <![CDATA[Collection name: Airline Booking System API - Automated Test Suite.]]>
+        <![CDATA[Request name: 09 - E2E Complete Booking Journey Flow / Step 7: E2E - Verify Booking Status.]]>
+        <![CDATA[Test description: Step 7: Verified booking details (200 OK).]]>
+        <![CDATA[Error message: expected response to have status code 200 but got 400.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 200 but got 400
+   at Object.eval sandbox-script.js:1:48).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="09 - E2E Complete Booking Journey Flow / Step 8: E2E - Check User Notification Delivery Logs" id="40a340b5-43d9-433f-9714-0d76e6b15af7" timestamp="2026-09-04T12:34:02.636Z" tests="1" failures="0" errors="0" time="0.087">
+    <testcase name="Step 8: Retrieved notification history (200 OK)" time="0.087" classname="09E2ECompleteBookingJourneyFlowStep8E2ECheckUserNotificationDeliveryLogs"/>
+  </testsuite>
+</testsuites>
