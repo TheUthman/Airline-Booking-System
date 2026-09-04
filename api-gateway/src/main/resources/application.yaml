@@ -1,0 +1,121 @@
+spring:
+  application:
+    name: api-gateway
+
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+
+            # =========================
+            # AUTH SERVICE
+            # =========================
+            - id: auth-service
+              uri: lb://AUTH-SERVICE
+              predicates:
+                - Path=/api/auth/**
+
+            # =========================
+            # FLIGHT SERVICE
+            # =========================
+            - id: flight-service
+              uri: lb://FLIGHT-SERVICE
+              predicates:
+                - Path=/api/flights/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: flightServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/flight-service
+
+            # =========================
+            # PASSENGER SERVICE
+            # =========================
+            - id: passenger-service
+              uri: lb://PASSENGER-SERVICE
+              predicates:
+                - Path=/api/passengers/**
+
+            # =========================
+            # BOOKING SERVICE
+            # =========================
+            - id: booking-service
+              uri: lb://BOOKING-SERVICE
+              predicates:
+                - Path=/api/bookings/**
+
+            # =========================
+            # PAYMENT SERVICE
+            # =========================
+            - id: payment-service
+              uri: lb://PAYMENT-SERVICE
+              predicates:
+                - Path=/api/payments/**
+
+            - id: notification-service
+              uri: lb://NOTIFICATION-SERVICE
+              predicates:
+                - Path=/api/notifications/**
+
+            - id: admin-service
+              uri: lb://ADMIN-SERVICE
+              predicates:
+                - Path=/api/admin/**
+
+
+server:
+  port: 8080
+
+
+# =========================
+# EUREKA
+# =========================
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
+
+# =========================
+# JWT
+# =========================
+
+jwt:
+  # Set JWT_SECRET in every deployed environment. The fallback is for local development only.
+  secret: ${JWT_SECRET:development-only-jwt-secret-change-before-production-2026}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+
+
+# =========================
+# RESILIENCE4J
+# =========================
+
+resilience4j:
+  circuitbreaker:
+    instances:
+
+      flightServiceCircuitBreaker:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+
+# =========================
+# ACTUATOR
+# =========================
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

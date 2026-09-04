@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: flight-service
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+  datasource:
+    url: ${FLIGHT_DB_URL:jdbc:h2:file:./data/flight-db;MODE=PostgreSQL;AUTO_SERVER=TRUE}
+    username: ${FLIGHT_DB_USERNAME:sa}
+    password: ${FLIGHT_DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+server:
+  port: 8083
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

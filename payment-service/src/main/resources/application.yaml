@@ -1,0 +1,10 @@
+spring:
+  application: { name: payment-service }
+  config: { import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}" }
+  datasource: { url: "${PAYMENT_DB_URL:jdbc:h2:file:./data/payment-db;MODE=PostgreSQL;AUTO_SERVER=TRUE}", username: "${PAYMENT_DB_USERNAME:sa}", password: "${PAYMENT_DB_PASSWORD:}" }
+  jpa: { hibernate: { ddl-auto: update }, open-in-view: false }
+  rabbitmq: { host: "${RABBITMQ_HOST:localhost}", port: "${RABBITMQ_PORT:5672}" }
+server: { port: 8086 }
+payment: { webhook-secret: "${PAYMENT_WEBHOOK_SECRET:development-webhook-secret}" }
+eureka: { client: { service-url: { defaultZone: "${EUREKA_URL:http://localhost:8761/eureka/}" } } }
+management: { endpoints: { web: { exposure: { include: health,info } } } }

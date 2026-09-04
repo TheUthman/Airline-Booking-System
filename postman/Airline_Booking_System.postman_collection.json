@@ -1,0 +1,2791 @@
+{
+  "info": {
+    "_postman_id": "9b12e345-6789-40ab-bcde-f123456789ab",
+    "name": "Airline Booking System API - Automated Test Suite",
+    "description": "Complete Postman test collection for the Airline Booking System microservices backend.\n\nAll requests are routed through the API Gateway (port 8080).\n\nFeatures:\n- Comprehensive test scripts (status code, schema validation, response time, headers)\n- Automated variable chaining (tokens, user IDs, flight IDs, booking IDs, PNRs, payment references)\n- Positive & negative / error test scenarios (400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 503 Fallback)\n- Full End-to-End user booking journey\n- Dynamic pre-request data generation to allow seamless Newman and Postman Runner executions.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "webhookSecret",
+      "value": "development-webhook-secret",
+      "type": "string"
+    },
+    {
+      "key": "userEmail",
+      "value": "passenger.test@example.com",
+      "type": "string"
+    },
+    {
+      "key": "userPassword",
+      "value": "Password123!",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "AdminSecret123!",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "passengerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flightId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flightNumber",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pnr",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "paymentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "providerReference",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flightOrigin",
+      "value": "LOS",
+      "type": "string"
+    },
+    {
+      "key": "flightDestination",
+      "value": "ABV",
+      "type": "string"
+    },
+    {
+      "key": "flightDate",
+      "value": "2026-09-01",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Authentication Service (/api/auth)",
+      "description": "Authentication and authorization endpoints (Register, Login, Token Refresh)",
+      "item": [
+        {
+          "name": "1.1 Register Passenger Account (Positive)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const timestamp = Date.now();",
+                  "const dynamicEmail = `traveler_${timestamp}@airline.test`;",
+                  "pm.collectionVariables.set(\"userEmail\", dynamicEmail);",
+                  "pm.variables.set(\"regEmail\", dynamicEmail);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is JSON with auth tokens\", function () {",
+                  "    pm.response.to.be.withBody;",
+                  "    pm.response.to.be.json;",
+                  "    const data = pm.response.json();",
+                  "    ",
+                  "    pm.expect(data).to.have.property(\"token\").that.is.a(\"string\").and.not.empty;",
+                  "    pm.expect(data).to.have.property(\"refreshToken\").that.is.a(\"string\").and.not.empty;",
+                  "    pm.expect(data).to.have.property(\"tokenType\", \"Bearer\");",
+                  "    pm.expect(data).to.have.property(\"userId\").that.is.a(\"number\");",
+                  "    pm.expect(data).to.have.property(\"email\", pm.variables.get(\"regEmail\"));",
+                  "    pm.expect(data).to.have.property(\"role\", \"PASSENGER\");",
+                  "    ",
+                  "    // Save tokens for subsequent requests",
+                  "    pm.collectionVariables.set(\"accessToken\", data.token);",
+                  "    pm.collectionVariables.set(\"refreshToken\", data.refreshToken);",
+                  "    pm.collectionVariables.set(\"userId\", data.userId);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is under 1500ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new passenger account. Automatically sets {{accessToken}}, {{refreshToken}}, {{userId}}, and {{userEmail}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Alex\",\n  \"lastName\": \"Taylor\",\n  \"email\": \"{{regEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Register Duplicate Email (Negative - 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error message about existing account\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"error\");",
+                  "    pm.expect(JSON.stringify(data)).to.include(\"already exists\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Attempting to register with an already registered email should fail with 400 Bad Request.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Alex\",\n  \"lastName\": \"Taylor\",\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Register Validation Failure - Short Password (Negative - 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates validation errors\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Validates that invalid email, blank names, and short passwords (< 8 chars) are rejected with 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"\",\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Login User (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Login returns valid tokens and user profile\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.token).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(data.refreshToken).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(data.email).to.eql(pm.collectionVariables.get(\"userEmail\"));",
+                  "    pm.expect(data.role).to.eql(\"PASSENGER\");",
+                  "    ",
+                  "    // Update active tokens",
+                  "    pm.collectionVariables.set(\"accessToken\", data.token);",
+                  "    pm.collectionVariables.set(\"refreshToken\", data.refreshToken);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate with valid credentials and receive updated access and refresh tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Login Invalid Credentials (Negative - 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message mentions invalid credentials\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.error).to.include(\"Invalid email or password\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Attempting to log in with an incorrect password fails with 401 Unauthorized.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"WrongPassword999!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Refresh Access Token (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"New access token is returned\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.token).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(data.refreshToken).to.eql(pm.collectionVariables.get(\"refreshToken\"));",
+                  "    ",
+                  "    // Update access token",
+                  "    pm.collectionVariables.set(\"accessToken\", data.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Exchange the refresh token for a newly signed access token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 Refresh Token with Invalid Token (Negative - 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Error details indicate invalid refresh token\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.error).to.include(\"Invalid refresh token\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Using a corrupted or forged refresh token returns 401 Unauthorized.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"invalid-or-fake-refresh-token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Flight Service (/api/flights)",
+      "description": "Public flight search and Admin flight schedule management",
+      "item": [
+        {
+          "name": "2.1 Admin - Create Scheduled Flight (Positive)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const flightNum = \"NG-\" + Math.floor(100 + Math.random() * 900);",
+                  "pm.variables.set(\"newFlightNumber\", flightNum);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs\", function() {",
+                  "        pm.expect(pm.response.code).to.eql(403);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 201 Created\", function () {",
+                  "        pm.response.to.have.status(201);",
+                  "    });",
+                  "",
+                  "    pm.test(\"Flight created with ID and details\", function () {",
+                  "        const data = pm.response.json();",
+                  "        pm.expect(data).to.have.property(\"id\").that.is.a(\"number\");",
+                  "        pm.expect(data).to.have.property(\"flightNumber\");",
+                  "        pm.expect(data.origin).to.eql(\"LOS\");",
+                  "        pm.expect(data.destination).to.eql(\"ABV\");",
+                  "        pm.expect(data.availableSeats).to.eql(120);",
+                  "        ",
+                  "        pm.collectionVariables.set(\"flightId\", data.id);",
+                  "        pm.collectionVariables.set(\"flightNumber\", data.flightNumber);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "admin"
+              ]
+            },
+            "description": "Create a new flight schedule as an Admin. Extracts {{flightId}} and {{flightNumber}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightNumber\": \"{{newFlightNumber}}\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"2026-09-01T08:00:00\",\n  \"arrivalTime\": \"2026-09-01T09:15:00\",\n  \"fare\": 185.5,\n  \"availableSeats\": 120\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Admin - Create Flight As Passenger (Negative - 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403 Forbidden for non-admin user\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "admin"
+              ]
+            },
+            "description": "Ensure non-admin users (PASSENGER role) cannot access admin flight endpoints.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightNumber\": \"UNAUTH-999\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"2026-09-01T10:00:00\",\n  \"arrivalTime\": \"2026-09-01T11:00:00\",\n  \"fare\": 100.0,\n  \"availableSeats\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Admin - Update Flight Schedule (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Admin role required for updating flight\", function() {",
+                  "        pm.expect(pm.response.code).to.eql(403);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 200 OK\", function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "",
+                  "    pm.test(\"Updated fields verified\", function () {",
+                  "        const data = pm.response.json();",
+                  "        pm.expect(data.fare).to.eql(195.00);",
+                  "        pm.expect(data.availableSeats).to.eql(110);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/admin/{{flightId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "admin",
+                "{{flightId}}"
+              ]
+            },
+            "description": "Update departure time, fare, or available seats for an existing flight.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightNumber\": \"{{flightNumber}}\",\n  \"origin\": \"LOS\",\n  \"destination\": \"ABV\",\n  \"departureTime\": \"2026-09-01T08:30:00\",\n  \"arrivalTime\": \"2026-09-01T09:45:00\",\n  \"fare\": 195.0,\n  \"availableSeats\": 110\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Search Flights (Public - Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns list of matching flights\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const flights = pm.response.json();",
+                  "    pm.expect(flights).to.be.an(\"array\");",
+                  "    ",
+                  "    if (flights.length > 0) {",
+                  "        const flight = flights[0];",
+                  "        pm.expect(flight).to.have.property(\"id\");",
+                  "        pm.expect(flight).to.have.property(\"flightNumber\");",
+                  "        pm.expect(flight.origin.toUpperCase()).to.eql(\"LOS\");",
+                  "        pm.expect(flight.destination.toUpperCase()).to.eql(\"ABV\");",
+                  "        ",
+                  "        // Cache flight ID if not already saved",
+                  "        if (!pm.collectionVariables.get(\"flightId\")) {",
+                  "            pm.collectionVariables.set(\"flightId\", flight.id);",
+                  "            pm.collectionVariables.set(\"flightNumber\", flight.flightNumber);",
+                  "        }",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/search?origin=LOS&destination=ABV&date=2026-09-01&passengers=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "origin",
+                  "value": "LOS"
+                },
+                {
+                  "key": "destination",
+                  "value": "ABV"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-09-01"
+                },
+                {
+                  "key": "passengers",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Public flight search by 3-letter IATA origin/destination, date, and passenger count."
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Search Flights Invalid IATA Code (Negative - 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/search?origin=TOOLONG&destination=X&date=2026-09-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "origin",
+                  "value": "TOOLONG"
+                },
+                {
+                  "key": "destination",
+                  "value": "X"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-09-01"
+                }
+              ]
+            },
+            "description": "Query parameters origin/destination must be exactly 3 alphabetic characters."
+          },
+          "response": []
+        },
+        {
+          "name": "2.6 Get Flight by ID (Public - Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Flight ID not found (expected if no flights seeded yet)\", function() {",
+                  "        pm.expect(pm.response.code).to.eql(404);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 200 OK\", function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "",
+                  "    pm.test(\"Flight object details matched\", function () {",
+                  "        const data = pm.response.json();",
+                  "        pm.expect(data).to.have.property(\"id\");",
+                  "        pm.expect(data).to.have.property(\"flightNumber\");",
+                  "        pm.expect(data).to.have.property(\"fare\");",
+                  "        pm.expect(data).to.have.property(\"availableSeats\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/{{flightId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "{{flightId}}"
+              ]
+            },
+            "description": "Fetch flight details by numeric ID."
+          },
+          "response": []
+        },
+        {
+          "name": "2.7 Get Non-existent Flight by ID (Negative - 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error payload has standard format\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"status\", 404);",
+                  "    pm.expect(data).to.have.property(\"message\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "999999"
+              ]
+            },
+            "description": "Requesting a non-existent flight ID returns 404 Not Found."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Passenger Service (/api/passengers)",
+      "description": "Traveller profile creation, listing, and updates",
+      "item": [
+        {
+          "name": "3.1 Create Traveller Profile (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Passenger created with ID and owner email\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(data.firstName).to.eql(\"Alex\");",
+                  "    pm.expect(data.lastName).to.eql(\"Taylor\");",
+                  "    pm.expect(data.documentNumber).to.eql(\"A09876543\");",
+                  "    pm.expect(data.ownerEmail).to.eql(pm.collectionVariables.get(\"userEmail\"));",
+                  "    ",
+                  "    pm.collectionVariables.set(\"passengerId\", data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/passengers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passengers"
+              ]
+            },
+            "description": "Create a passenger profile. Stores {{passengerId}} for booking creation.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Alex\",\n  \"lastName\": \"Taylor\",\n  \"dateOfBirth\": \"1992-04-12\",\n  \"phone\": \"+2348012345678\",\n  \"documentNumber\": \"A09876543\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Create Traveller Without Auth Token (Negative - 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/passengers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passengers"
+              ]
+            },
+            "description": "Unauthenticated requests to passenger endpoints must return 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"dateOfBirth\": \"1995-01-01\",\n  \"phone\": \"+1234567890\",\n  \"documentNumber\": \"B12345678\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Create Traveller Validation Error - Future DOB (Negative - 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/passengers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passengers"
+              ]
+            },
+            "description": "Blank name or future Date of Birth violates `@NotBlank` and `@Past` constraints.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"Taylor\",\n  \"dateOfBirth\": \"2099-01-01\",\n  \"phone\": \"+123456789\",\n  \"documentNumber\": \"C12345678\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Get My Travellers (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns list of travellers for logged in user\", function () {",
+                  "    const list = pm.response.json();",
+                  "    pm.expect(list).to.be.an(\"array\");",
+                  "    pm.expect(list.length).to.be.at.least(1);",
+                  "    ",
+                  "    const passenger = list.find(p => p.id === pm.collectionVariables.get(\"passengerId\"));",
+                  "    if (passenger) {",
+                  "        pm.expect(passenger.ownerEmail).to.eql(pm.collectionVariables.get(\"userEmail\"));",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/passengers/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passengers",
+                "me"
+              ]
+            },
+            "description": "List all passenger profiles created under the authenticated user's account."
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 Update Traveller Profile (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Traveller profile successfully updated\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.lastName).to.eql(\"Taylor-Smith\");",
+                  "    pm.expect(data.documentNumber).to.eql(\"A09876543-REV\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/passengers/{{passengerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passengers",
+                "{{passengerId}}"
+              ]
+            },
+            "description": "Update an existing passenger's profile.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Alex\",\n  \"lastName\": \"Taylor-Smith\",\n  \"dateOfBirth\": \"1992-04-12\",\n  \"phone\": \"+2348099999999\",\n  \"documentNumber\": \"A09876543-REV\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.6 Update Non-existent Traveller (Negative - 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/passengers/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passengers",
+                "999999"
+              ]
+            },
+            "description": "Updating a non-existent traveller ID returns 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ghost\",\n  \"lastName\": \"User\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"phone\": \"+1000000000\",\n  \"documentNumber\": \"G0000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Booking Service (/api/bookings)",
+      "description": "PNR reservation management with Redis distributed seat locking",
+      "item": [
+        {
+          "name": "4.1 Create Booking & Acquire Seat Lock (Positive)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const seatNum = Math.floor(1 + Math.random() * 30) + [\"A\",\"B\",\"C\",\"D\",\"E\",\"F\"][Math.floor(Math.random() * 6)];",
+                  "pm.collectionVariables.set(\"selectedSeat\", seatNum);",
+                  "pm.variables.set(\"dynamicSeat\", seatNum);",
+                  "",
+                  "const flightIdVal = pm.collectionVariables.get(\"flightId\") || 1;",
+                  "const passIdVal = pm.collectionVariables.get(\"passengerId\") || 1;",
+                  "pm.variables.set(\"reqFlightId\", flightIdVal);",
+                  "pm.variables.set(\"reqPassengerId\", passIdVal);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Booking created with PNR and PENDING_PAYMENT status\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(data).to.have.property(\"pnr\").that.is.a(\"string\").with.lengthOf(6);",
+                  "    pm.expect(data.status).to.eql(\"PENDING_PAYMENT\");",
+                  "    pm.expect(data.ownerEmail).to.eql(pm.collectionVariables.get(\"userEmail\"));",
+                  "    ",
+                  "    pm.collectionVariables.set(\"bookingId\", data.id);",
+                  "    pm.collectionVariables.set(\"pnr\", data.pnr);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "Creates a reservation in PENDING_PAYMENT status and acquires a 10-minute Redis lock on the selected seat. Stores {{bookingId}} and {{pnr}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightId\": \"{{reqFlightId}}\",\n  \"passengerId\": \"{{reqPassengerId}}\",\n  \"seatNumber\": \"{{dynamicSeat}}\",\n  \"amount\": 185.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Create Booking Duplicate Seat Lock (Negative - 409 Conflict)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const flightIdVal = pm.collectionVariables.get(\"flightId\") || 1;",
+                  "const passIdVal = pm.collectionVariables.get(\"passengerId\") || 1;",
+                  "pm.variables.set(\"reqFlightId\", flightIdVal);",
+                  "pm.variables.set(\"reqPassengerId\", passIdVal);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 409 Conflict\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test(\"Conflict reason specifies seat is locked\", function () {",
+                  "    const errorText = pm.response.text();",
+                  "    pm.expect(errorText).to.include(\"currently being selected\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "Attempting to book the same seat while locked must return 409 Conflict.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightId\": \"{{reqFlightId}}\",\n  \"passengerId\": \"{{reqPassengerId}}\",\n  \"seatNumber\": \"{{selectedSeat}}\",\n  \"amount\": 185.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 Create Booking Invalid Seat Number Format (Negative - 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "Seat number must match regexp [0-9]{1,3}[A-Za-z].",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightId\": 1,\n  \"passengerId\": 1,\n  \"seatNumber\": \"INVALID_SEAT_123\",\n  \"amount\": 100.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 Get My Bookings (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns list of bookings ordered by creation date\", function () {",
+                  "    const bookings = pm.response.json();",
+                  "    pm.expect(bookings).to.be.an(\"array\");",
+                  "    pm.expect(bookings.length).to.be.at.least(1);",
+                  "    ",
+                  "    const current = bookings.find(b => b.id === pm.collectionVariables.get(\"bookingId\"));",
+                  "    if (current) {",
+                  "        pm.expect(current.pnr).to.eql(pm.collectionVariables.get(\"pnr\"));",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "List all reservations for the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "4.5 Get Booking by ID (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Booking details matched\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.id).to.eql(pm.collectionVariables.get(\"bookingId\"));",
+                  "    pm.expect(data.pnr).to.eql(pm.collectionVariables.get(\"pnr\"));",
+                  "    pm.expect(data.ownerEmail).to.eql(pm.collectionVariables.get(\"userEmail\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Fetch a specific booking by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "4.6 Cancel Pending Booking (Positive)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// First create a temporary booking to cancel so main test flow isn't disturbed",
+                  "const seatToCancel = \"29F\";",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get(\"baseUrl\") + \"/api/bookings\",",
+                  "    method: \"POST\",",
+                  "    header: {",
+                  "        \"Content-Type\": \"application/json\",",
+                  "        \"Authorization\": \"Bearer \" + pm.collectionVariables.get(\"accessToken\")",
+                  "    },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            flightId: pm.collectionVariables.get(\"flightId\") || 1,",
+                  "            passengerId: pm.collectionVariables.get(\"passengerId\") || 1,",
+                  "            seatNumber: seatToCancel,",
+                  "            amount: 150.00",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (!err && res.code === 201) {",
+                  "        const json = res.json();",
+                  "        pm.variables.set(\"bookingToCancelId\", json.id);",
+                  "    } else {",
+                  "        pm.variables.set(\"bookingToCancelId\", pm.collectionVariables.get(\"bookingId\"));",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Booking status changed to CANCELLED\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.status).to.eql(\"CANCELLED\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingToCancelId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingToCancelId}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancels a pending reservation and releases its Redis seat lock."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Payment Service (/api/payments)",
+      "description": "Payment intent initiation, provider reference generation, and webhook event publishing",
+      "item": [
+        {
+          "name": "5.1 Initiate Payment (Positive)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const bookingIdVal = pm.collectionVariables.get(\"bookingId\") || 1;",
+                  "pm.variables.set(\"payBookingId\", bookingIdVal);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Payment intent created with providerReference and PENDING status\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(data).to.have.property(\"providerReference\").that.is.a(\"string\").with.string(\"pay_\");",
+                  "    pm.expect(data.status).to.eql(\"PENDING\");",
+                  "    pm.expect(data.ownerEmail).to.eql(pm.collectionVariables.get(\"userEmail\"));",
+                  "    ",
+                  "    pm.collectionVariables.set(\"paymentId\", data.id);",
+                  "    pm.collectionVariables.set(\"providerReference\", data.providerReference);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/initiate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "initiate"
+              ]
+            },
+            "description": "Initiates payment intent for a booking, generating a unique providerReference. Stores {{paymentId}} and {{providerReference}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{payBookingId}}\",\n  \"amount\": 185.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Initiate Payment Without Auth (Negative - 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/initiate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "initiate"
+              ]
+            },
+            "description": "Payment initiation requires valid bearer token authentication.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 1,\n  \"amount\": 100.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Webhook - Payment Succeeded Callback (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Payment-Webhook-Secret",
+                "value": "{{webhookSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "webhook"
+              ]
+            },
+            "description": "Simulates external payment provider webhook callback when payment succeeds. Publishes `payment.succeeded` event to RabbitMQ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerReference\": \"{{providerReference}}\",\n  \"succeeded\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 Webhook - Payment Failed Callback (Positive)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Create an intent specifically to test failure callback",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get(\"baseUrl\") + \"/api/payments/initiate\",",
+                  "    method: \"POST\",",
+                  "    header: {",
+                  "        \"Content-Type\": \"application/json\",",
+                  "        \"Authorization\": \"Bearer \" + pm.collectionVariables.get(\"accessToken\")",
+                  "    },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            bookingId: pm.collectionVariables.get(\"bookingId\") || 1,",
+                  "            amount: 50.00",
+                  "        })",
+                  "    }",
+                  "}, function(err, res) {",
+                  "    if (!err && res.code === 201) {",
+                  "        pm.variables.set(\"failedProviderRef\", res.json().providerReference);",
+                  "    } else {",
+                  "        pm.variables.set(\"failedProviderRef\", pm.collectionVariables.get(\"providerReference\"));",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Payment-Webhook-Secret",
+                "value": "{{webhookSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "webhook"
+              ]
+            },
+            "description": "Simulates external payment provider webhook callback when payment fails. Publishes `payment.failed` event to RabbitMQ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerReference\": \"{{failedProviderRef}}\",\n  \"succeeded\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.5 Webhook - Invalid Secret (Negative - 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Payment-Webhook-Secret",
+                "value": "wrong-secret-signature"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "webhook"
+              ]
+            },
+            "description": "Calls without the valid X-Payment-Webhook-Secret are rejected with 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerReference\": \"{{providerReference}}\",\n  \"succeeded\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.6 Webhook - Non-existent Payment Ref (Negative - 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Payment-Webhook-Secret",
+                "value": "{{webhookSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "webhook"
+              ]
+            },
+            "description": "Webhook called for an unknown provider reference returns 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerReference\": \"pay_nonexistent_ref_99999\",\n  \"succeeded\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 - Notification Service (/api/notifications)",
+      "description": "Retrieve RabbitMQ asynchronous event delivery logs for current user",
+      "item": [
+        {
+          "name": "6.1 Get My Notification Delivery Logs (Positive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is a list of delivery logs\", function () {",
+                  "    const logs = pm.response.json();",
+                  "    pm.expect(logs).to.be.an(\"array\");",
+                  "    if (logs.length > 0) {",
+                  "        const item = logs[0];",
+                  "        pm.expect(item).to.have.property(\"recipient\", pm.collectionVariables.get(\"userEmail\"));",
+                  "        pm.expect(item).to.have.property(\"type\");",
+                  "        pm.expect(item).to.have.property(\"payload\");",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "Fetch up to 50 latest notification event logs delivered to the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 Get Notifications Without Auth (Negative - 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "Unauthenticated request to notifications endpoint returns 401."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 - Admin Service (/api/admin)",
+      "description": "Administrative metrics and operational action auditing",
+      "item": [
+        {
+          "name": "7.1 Get Operations Dashboard (Positive - Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs\", function() {",
+                  "        pm.expect(pm.response.code).to.eql(403);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 200 OK\", function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "",
+                  "    pm.test(\"Dashboard contains service status and audit count\", function () {",
+                  "        const data = pm.response.json();",
+                  "        pm.expect(data).to.have.property(\"service\", \"admin-service\");",
+                  "        pm.expect(data).to.have.property(\"generatedAt\");",
+                  "        pm.expect(data).to.have.property(\"auditActionCount\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "Operations dashboard endpoint protected by ROLE_ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "7.2 Get Operations Dashboard As Passenger (Negative - 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "Normal passenger tokens cannot view the Admin Dashboard."
+          },
+          "response": []
+        },
+        {
+          "name": "7.3 Record Operational Action (Positive - Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Admin Role check: Set {{adminToken}} with ROLE_ADMIN if 403 occurs\", function() {",
+                  "        pm.expect(pm.response.code).to.eql(403);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 202 Accepted\", function () {",
+                  "        pm.response.to.have.status(202);",
+                  "    });",
+                  "",
+                  "    pm.test(\"Audit log response returned with RECORDED status\", function () {",
+                  "        const data = pm.response.json();",
+                  "        pm.expect(data).to.have.property(\"status\", \"RECORDED\");",
+                  "        pm.expect(data).to.have.property(\"requestedBy\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "actions"
+              ]
+            },
+            "description": "Record an operational audit action into Admin Service DB.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"FLIGHT_SCHEDULE_SYNC\",\n  \"details\": \"Triggered manual inventory reconciliation\",\n  \"operator\": \"Postman Automated Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 - Gateway Fallback & Actuator",
+      "description": "Circuit breaker fallback handlers and Spring Boot Actuator health checks",
+      "item": [
+        {
+          "name": "8.1 Flight Service Fallback Handler",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 503 Service Unavailable\", function () {",
+                  "    pm.response.to.have.status(503);",
+                  "});",
+                  "",
+                  "pm.test(\"Fallback error response format\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"error\", \"Flight Service Unavailable\");",
+                  "    pm.expect(data).to.have.property(\"message\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fallback/flight-service",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fallback",
+                "flight-service"
+              ]
+            },
+            "description": "Directly tests the Circuit Breaker fallback response for Flight Service."
+          },
+          "response": []
+        },
+        {
+          "name": "8.2 Actuator Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Application status is UP\", function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property(\"status\", \"UP\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Check gateway health status via Spring Boot Actuator."
+          },
+          "response": []
+        },
+        {
+          "name": "8.3 Actuator Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "info"
+              ]
+            },
+            "description": "Check gateway info endpoint via Spring Boot Actuator."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 - E2E Complete Booking Journey Flow",
+      "description": "Sequential user journey test: Register -> Login -> Add Traveller -> Search Flight -> Create Booking (Seat Lock) -> Initiate Payment -> Succeeded Webhook -> Verify State",
+      "item": [
+        {
+          "name": "Step 1: E2E - Register User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const e2eEmail = `e2e_${Date.now()}@airline.test`;",
+                  "pm.collectionVariables.set(\"e2eUserEmail\", e2eEmail);",
+                  "pm.variables.set(\"e2eEmail\", e2eEmail);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Step 1: User registered (201 Created)\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set(\"e2eToken\", data.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Journey\",\n  \"lastName\": \"Traveler\",\n  \"email\": \"{{e2eEmail}}\",\n  \"password\": \"E2ePassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 2: E2E - Create Traveller Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Step 2: Traveller profile created (201 Created)\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set(\"e2ePassengerId\", data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/passengers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passengers"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Journey\",\n  \"lastName\": \"Traveler\",\n  \"dateOfBirth\": \"1988-11-20\",\n  \"phone\": \"+2348000000001\",\n  \"documentNumber\": \"PASS-E2E-1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 3: E2E - Search Flights",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Step 3: Flight search successful (200 OK)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const flights = pm.response.json();",
+                  "    if (flights.length > 0) {",
+                  "        pm.collectionVariables.set(\"e2eFlightId\", flights[0].id);",
+                  "        pm.collectionVariables.set(\"e2eFare\", flights[0].fare);",
+                  "    } else {",
+                  "        pm.collectionVariables.set(\"e2eFlightId\", 1);",
+                  "        pm.collectionVariables.set(\"e2eFare\", 150.00);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/search?origin=LOS&destination=ABV&date=2026-09-01&passengers=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "origin",
+                  "value": "LOS"
+                },
+                {
+                  "key": "destination",
+                  "value": "ABV"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-09-01"
+                },
+                {
+                  "key": "passengers",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Step 4: E2E - Create Booking with Seat Lock",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const e2eSeat = \"3\" + [\"A\",\"B\",\"C\",\"D\"][Math.floor(Math.random() * 4)];",
+                  "pm.collectionVariables.set(\"e2eSeat\", e2eSeat);",
+                  "pm.variables.set(\"flightIdVal\", pm.collectionVariables.get(\"e2eFlightId\") || 1);",
+                  "pm.variables.set(\"passIdVal\", pm.collectionVariables.get(\"e2ePassengerId\") || 1);",
+                  "pm.variables.set(\"fareVal\", pm.collectionVariables.get(\"e2eFare\") || 150.00);",
+                  "pm.variables.set(\"seatVal\", e2eSeat);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Step 4: Booking created with seat lock (201 Created)\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.status).to.eql(\"PENDING_PAYMENT\");",
+                  "    pm.collectionVariables.set(\"e2eBookingId\", data.id);",
+                  "    pm.collectionVariables.set(\"e2ePnr\", data.pnr);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightId\": \"{{flightIdVal}}\",\n  \"passengerId\": \"{{passIdVal}}\",\n  \"seatNumber\": \"{{seatVal}}\",\n  \"amount\": \"{{fareVal}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 5: E2E - Initiate Payment Intent",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"e2eBookId\", pm.collectionVariables.get(\"e2eBookingId\"));",
+                  "pm.variables.set(\"e2eAmt\", pm.collectionVariables.get(\"e2eFare\") || 150.00);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Step 5: Payment intent initiated (201 Created)\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.status).to.eql(\"PENDING\");",
+                  "    pm.collectionVariables.set(\"e2eProviderRef\", data.providerReference);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/initiate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "initiate"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{e2eBookId}}\",\n  \"amount\": \"{{e2eAmt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 6: E2E - Provider Webhook Succeeded Callback",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"e2eProviderRefVal\", pm.collectionVariables.get(\"e2eProviderRef\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Step 6: Webhook accepted and processed (200 OK)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Payment-Webhook-Secret",
+                "value": "{{webhookSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "webhook"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerReference\": \"{{e2eProviderRefVal}}\",\n  \"succeeded\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 7: E2E - Verify Booking Status",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"e2eBookingIdVal\", pm.collectionVariables.get(\"e2eBookingId\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Step 7: Verified booking details (200 OK)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.pnr).to.eql(pm.collectionVariables.get(\"e2ePnr\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{e2eBookingIdVal}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{e2eBookingIdVal}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Step 8: E2E - Check User Notification Delivery Logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Step 8: Retrieved notification history (200 OK)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const logs = pm.response.json();",
+                  "    pm.expect(logs).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

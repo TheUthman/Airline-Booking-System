@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+  main:
+    web-application-type: servlet
+eureka:
+  client:
+    enabled: false
+
+jwt:
+  secret: test-only-jwt-secret-do-not-use-in-production-2026
+
+cors:
+  allowed-origins: http://localhost:3000

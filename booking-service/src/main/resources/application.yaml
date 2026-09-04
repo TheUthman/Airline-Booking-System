@@ -1,0 +1,10 @@
+spring:
+  application: { name: booking-service }
+  config: { import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}" }
+  datasource: { url: "${BOOKING_DB_URL:jdbc:h2:file:./data/booking-db;MODE=PostgreSQL;AUTO_SERVER=TRUE}", username: "${BOOKING_DB_USERNAME:sa}", password: "${BOOKING_DB_PASSWORD:}" }
+  jpa: { hibernate: { ddl-auto: update }, open-in-view: false }
+  data: { redis: { host: "${REDIS_HOST:localhost}", port: "${REDIS_PORT:6379}" } }
+  rabbitmq: { host: "${RABBITMQ_HOST:localhost}", port: "${RABBITMQ_PORT:5672}" }
+server: { port: 8085 }
+eureka: { client: { service-url: { defaultZone: "${EUREKA_URL:http://localhost:8761/eureka/}" } } }
+management: { endpoints: { web: { exposure: { include: health,info } } } }

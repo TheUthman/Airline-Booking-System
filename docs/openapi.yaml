@@ -1,0 +1,79 @@
+openapi: 3.0.3
+info:
+  title: Airline Booking System API
+  version: 1.0.0
+  description: All public calls go through the API Gateway. Protected endpoints require a Bearer access token.
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /api/auth/register:
+    post:
+      security: []
+      summary: Register a passenger account
+      responses: { '201': { description: Account and tokens created } }
+  /api/auth/login:
+    post:
+      security: []
+      summary: Authenticate and issue tokens
+      responses: { '200': { description: Tokens issued } }
+  /api/auth/refresh:
+    post:
+      security: []
+      summary: Exchange a refresh token for an access token
+      responses: { '200': { description: Access token renewed } }
+  /api/flights/search:
+    get:
+      security: []
+      summary: Search active flights
+      parameters:
+        - { name: origin, in: query, required: true, schema: { type: string, minLength: 3, maxLength: 3 } }
+        - { name: destination, in: query, required: true, schema: { type: string, minLength: 3, maxLength: 3 } }
+        - { name: date, in: query, required: true, schema: { type: string, format: date } }
+      responses: { '200': { description: Matching flights } }
+  /api/passengers:
+    post:
+      summary: Create a traveller profile
+      responses: { '201': { description: Traveller created } }
+  /api/passengers/me:
+    get:
+      summary: List the current user's travellers
+      responses: { '200': { description: Traveller profiles } }
+  /api/bookings:
+    get:
+      summary: List the current user's bookings
+      responses: { '200': { description: Bookings } }
+    post:
+      summary: Create a pending booking and acquire a temporary seat lock
+      responses: { '201': { description: Pending booking created }, '409': { $ref: '#/components/responses/SeatUnavailable' } }
+  /api/bookings/{id}/cancel:
+    post:
+      summary: Cancel a pending booking
+      parameters: [ { $ref: '#/components/parameters/BookingId' } ]
+      responses: { '200': { description: Booking cancelled } }
+  /api/payments/initiate:
+    post:
+      summary: Create a payment intent for a pending booking
+      responses: { '201': { description: Payment intent created } }
+  /api/payments/webhook:
+    post:
+      security: []
+      summary: Trusted provider payment callback
+      responses: { '200': { description: Payment event published }, '401': { description: Invalid webhook secret } }
+  /api/notifications:
+    get:
+      summary: List recent notification delivery logs
+      responses: { '200': { description: Delivery logs } }
+  /api/admin/dashboard:
+    get:
+      summary: View operations dashboard
+      responses: { '200': { description: Dashboard }, '403': { description: Admin role required } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    BookingId: { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+  responses:
+    SeatUnavailable:
+      description: The requested seat is locked by another booking attempt.

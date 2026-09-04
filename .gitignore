@@ -1,0 +1,8 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Build and local database output
+**/target/
+**/data/
