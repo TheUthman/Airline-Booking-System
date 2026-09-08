@@ -6,7 +6,9 @@ spring:
   rabbitmq: { host: "${RABBITMQ_HOST:localhost}", port: "${RABBITMQ_PORT:5672}", username: "${RABBITMQ_USERNAME:guest}", password: "${RABBITMQ_PASSWORD:guest}" }
 server: { port: 8087 }
 notifications:
-  email:
-    resend-api-key: "${RESEND_API_KEY:}"
-    from: "${EMAIL_FROM:Airline Booking <onboarding@resend.dev>}"
+  mailgun:
+    api-key: "${MAILGUN_API_KEY:}"
+    domain: "${MAILGUN_DOMAIN:}"
+    base-url: "${MAILGUN_BASE_URL:https://api.mailgun.net}"
+    from: "${EMAIL_FROM:Airline Booking <postmaster@sandbox.mailgun.org>}"
 eureka: { client: { service-url: { defaultZone: "${EUREKA_URL:http://localhost:8761/eureka/}" } } }

@@ -134,7 +134,7 @@ services:
 
   notification-service:
     build: { context: ., dockerfile: notification-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/airline_notification, NOTIFICATION_DB_USERNAME: airline, NOTIFICATION_DB_PASSWORD: airline_local_password, RABBITMQ_HOST: rabbitmq, RABBITMQ_USERNAME: airline, RABBITMQ_PASSWORD: airline_local_password, RESEND_API_KEY: "${RESEND_API_KEY:-}", EMAIL_FROM: "${EMAIL_FROM:-Airline Booking <onboarding@resend.dev>}" }
+    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/airline_notification, NOTIFICATION_DB_USERNAME: airline, NOTIFICATION_DB_PASSWORD: airline_local_password, RABBITMQ_HOST: rabbitmq, RABBITMQ_USERNAME: airline, RABBITMQ_PASSWORD: airline_local_password, MAILGUN_API_KEY: "${MAILGUN_API_KEY:-}", MAILGUN_DOMAIN: "${MAILGUN_DOMAIN:-}", MAILGUN_BASE_URL: "${MAILGUN_BASE_URL:-https://api.mailgun.net}", EMAIL_FROM: "${EMAIL_FROM:-Airline Booking <postmaster@sandbox.mailgun.org>}" }
     depends_on:
       config-server:
         condition: service_healthy

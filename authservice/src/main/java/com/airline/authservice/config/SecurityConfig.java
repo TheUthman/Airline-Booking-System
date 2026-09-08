@@ -43,6 +43,8 @@ public class SecurityConfig {
                                         .hasRole("ADMIN")
                                         .requestMatchers("/actuator/**")
                                         .permitAll()
+                                        .requestMatchers("/error")
+                                        .permitAll()
                                         .anyRequest()
                                         .authenticated())
                 .addFilterBefore(

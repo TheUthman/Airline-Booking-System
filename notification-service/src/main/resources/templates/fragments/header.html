@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+</head>
+<body>
+    <div th:fragment="email-header(title)" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 24px; text-align: center; border-radius: 8px 8px 0 0; color: #ffffff;">
+        <h1 style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">✈️ SkyWings Airlines</h1>
+        <p th:if="${title}" th:text="${title}" style="margin: 8px 0 0 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; opacity: 0.9;"></p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Booking Confirmation</title>
+</head>
+<body style="margin: 0; padding: 20px; background-color: #f1f5f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+        <tr>
+            <td>
+                <div th:replace="~{fragments/header :: email-header('Booking Confirmation')}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 28px 24px; color: #1e293b;">
+                <h2 style="margin: 0 0 16px 0; font-size: 20px; color: #0f172a;">Your flight is confirmed! 🎉</h2>
+                <p style="margin: 0 0 20px 0; line-height: 1.5; color: #475569;">
+                    Thank you for booking with SkyWings. Here are the details of your upcoming journey:
+                </p>
+
+                <table width="100%" cellpadding="10" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                    <tr>
+                        <td style="font-size: 13px; color: #64748b; width: 40%;">Booking ID:</td>
+                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="|#${bookingId}|">#1001</td>
+                    </tr>
+                    <tr th:if="${bookingReference != null}">
+                        <td style="font-size: 13px; color: #64748b;">Booking Reference:</td>
+                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${bookingReference}">XYZ123</td>
+                    </tr>
+                    <tr th:if="${flightNumber != null}">
+                        <td style="font-size: 13px; color: #64748b;">Flight:</td>
+                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${flightNumber}">SW-204</td>
+                    </tr>
+                    <tr th:if="${origin != null and destination != null}">
+                        <td style="font-size: 13px; color: #64748b;">Route:</td>
+                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="|${origin} → ${destination}|">LHR → JFK</td>
+                    </tr>
+                    <tr th:if="${departureTime != null}">
+                        <td style="font-size: 13px; color: #64748b;">Departure:</td>
+                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${departureTime}">2026-09-10 10:00</td>
+                    </tr>
+                    <tr th:if="${totalAmount != null}">
+                        <td style="font-size: 13px; color: #64748b;">Total Amount:</td>
+                        <td style="font-size: 15px; font-weight: 700; color: #16a34a;" th:text="|$${totalAmount}|">$350.00</td>
+                    </tr>
+                </table>
+
+                <div th:if="${passengerNames != null and !passengerNames.isEmpty()}" style="margin-bottom: 20px;">
+                    <h3 style="font-size: 14px; color: #334155; margin: 0 0 8px 0;">Passengers:</h3>
+                    <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px;">
+                        <li th:each="name : ${passengerNames}" th:text="${name}">John Doe</li>
+                    </ul>
+                </div>
+
+                <p style="margin: 20px 0 0 0; font-size: 13px; color: #94a3b8; line-height: 1.4;">
+                    Please make sure to arrive at the airport at least 2 hours before scheduled departure. Have a great flight!
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div th:replace="~{fragments/footer :: email-footer}"></div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

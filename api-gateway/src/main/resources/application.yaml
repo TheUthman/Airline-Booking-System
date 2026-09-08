@@ -29,7 +29,7 @@ spring:
               filters:
                 - name: CircuitBreaker
                   args:
-                    name: flightServiceCircuitBreaker
+                    id: flightServiceCircuitBreaker
                     fallbackUri: forward:/fallback/flight-service
 
             # =========================

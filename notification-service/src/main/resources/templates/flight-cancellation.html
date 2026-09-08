@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Flight Cancellation Notice</title>
+</head>
+<body style="margin: 0; padding: 20px; background-color: #f1f5f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+        <tr>
+            <td>
+                <div th:replace="~{fragments/header :: email-header('Important Flight Notice')}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 28px 24px; color: #1e293b;">
+                <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 4px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 6px 0; color: #991b1b; font-size: 16px;">Flight Cancellation Notification</h3>
+                    <p style="margin: 0; color: #b91c1c; font-size: 14px;">
+                        We regret to inform you that flight <strong th:text="${flightNumber}">SW-101</strong> has been cancelled.
+                    </p>
+                </div>
+
+                <table width="100%" cellpadding="10" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                    <tr>
+                        <td style="font-size: 13px; color: #64748b; width: 40%;">Flight Number:</td>
+                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${flightNumber}">SW-101</td>
+                    </tr>
+                    <tr th:if="${origin != null and destination != null}">
+                        <td style="font-size: 13px; color: #64748b;">Route:</td>
+                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="|${origin} → ${destination}|">LHR → JFK</td>
+                    </tr>
+                    <tr th:if="${departureDate != null}">
+                        <td style="font-size: 13px; color: #64748b;">Scheduled Date:</td>
+                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${departureDate}">2026-09-15</td>
+                    </tr>
+                    <tr th:if="${reason != null}">
+                        <td style="font-size: 13px; color: #64748b;">Reason:</td>
+                        <td style="font-size: 14px; color: #475569;" th:text="${reason}">Operational constraints</td>
+                    </tr>
+                </table>
+
+                <h4 style="margin: 0 0 8px 0; color: #0f172a; font-size: 15px;">Next Steps & Rebooking</h4>
+                <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.5; color: #475569;">
+                    You are eligible for a full refund or free rebooking to an alternative flight. Please visit our rebooking portal or contact customer service for immediate assistance.
+                </p>
+
+                <div th:if="${refundPolicyUrl != null}" style="text-align: center; margin: 24px 0;">
+                    <a th:href="${refundPolicyUrl}" href="#" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; display: inline-block;">
+                        Manage Booking & Refund
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div th:replace="~{fragments/footer :: email-footer}"></div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

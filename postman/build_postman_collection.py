@@ -256,7 +256,7 @@ pm.test("Status code is 401 Unauthorized", function () {
 
 pm.test("Error message mentions invalid credentials", function () {
     const data = pm.response.json();
-    pm.expect(data.error).to.include("Invalid email or password");
+    pm.expect(data.message).to.include("Invalid email or password");
 });
 """,
             description="Attempting to log in with an incorrect password fails with 401 Unauthorized."
@@ -277,10 +277,11 @@ pm.test("Status code is 200 OK", function () {
 pm.test("New access token is returned", function () {
     const data = pm.response.json();
     pm.expect(data.token).to.be.a("string").and.not.empty;
-    pm.expect(data.refreshToken).to.eql(pm.collectionVariables.get("refreshToken"));
-    
-    // Update access token
+    pm.expect(data.refreshToken).to.be.a("string").and.not.empty;
+
+    // Refresh rotation: update access and refresh tokens
     pm.collectionVariables.set("accessToken", data.token);
+    pm.collectionVariables.set("refreshToken", data.refreshToken);
 });
 """,
             description="Exchange the refresh token for a newly signed access token."
@@ -300,7 +301,7 @@ pm.test("Status code is 401 Unauthorized", function () {
 
 pm.test("Error details indicate invalid refresh token", function () {
     const data = pm.response.json();
-    pm.expect(data.error).to.include("Invalid refresh token");
+    pm.expect(data.message).to.include("Invalid refresh token");
 });
 """,
             description="Using a corrupted or forged refresh token returns 401 Unauthorized."
