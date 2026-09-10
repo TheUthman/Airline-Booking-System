@@ -2,12 +2,18 @@ spring:
   application:
     name: config-server
 
+  profiles:
+    active: native
+
   cloud:
     config:
       server:
-        git:
-          uri: https://github.com/TheUthman/airline-booking-config
-          default-label: main
+        health:
+          enabled: false
+        native:
+          # All centrally served configuration ships in this application JAR.
+          # Add shared configuration here rather than using an external Git repo.
+          search-locations: classpath:/config-repo
 
 server:
   port: 8888

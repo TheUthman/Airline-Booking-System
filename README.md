@@ -14,7 +14,7 @@ The gateway API contract is available as [OpenAPI 3.0 YAML](docs/openapi.yaml); 
 | --- | ---: | --- |
 | API Gateway | 8080 | JWT validation, routing and role enforcement |
 | Service Registry | 8761 | Eureka service discovery |
-| Config Server | 8888 | Central configuration endpoint |
+| Config Server | 8888 | Central configuration endpoint (served from this repository) |
 | Auth Service | 8082 | Registration, login and refresh tokens |
 | Flight Service | 8083 | Flight search and admin flight schedules |
 | Passenger Service | 8084 | Traveller profiles and documents |

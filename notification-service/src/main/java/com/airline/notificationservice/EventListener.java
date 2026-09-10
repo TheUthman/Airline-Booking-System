@@ -22,14 +22,19 @@ import java.time.LocalDateTime;
 @Configuration
 class NotificationQueueConfig {
     @Bean
+    TopicExchange airlineEventsExchange() {
+        return new TopicExchange("airline.events", true, false);
+    }
+
+    @Bean
     Queue notificationQueue() {
         return QueueBuilder.durable("notification.events").build();
     }
 
     @Bean
-    Binding notificationBinding(Queue notificationQueue) {
+    Binding notificationBinding(Queue notificationQueue, TopicExchange airlineEventsExchange) {
         return BindingBuilder.bind(notificationQueue)
-                .to(new TopicExchange("airline.events", true, false))
+                .to(airlineEventsExchange)
                 .with("#");
     }
 }

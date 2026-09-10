@@ -1,8 +1,36 @@
 spring:
-  application: { name: passenger-service }
-  config: { import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}" }
-  datasource: { url: "${PASSENGER_DB_URL:jdbc:h2:file:./data/passenger-db;MODE=PostgreSQL;AUTO_SERVER=TRUE}", username: "${PASSENGER_DB_USERNAME:sa}", password: "${PASSENGER_DB_PASSWORD:}" }
-  jpa: { hibernate: { ddl-auto: update }, open-in-view: false }
-server: { port: 8084 }
-eureka: { client: { service-url: { defaultZone: "${EUREKA_URL:http://localhost:8761/eureka/}" } } }
-management: { endpoints: { web: { exposure: { include: health,info } } } }
+  application:
+    name: passenger-service
+
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+
+  datasource:
+    url: "${PASSENGER_DB_URL}"
+    username: "${PASSENGER_DB_USERNAME}"
+    password: "${PASSENGER_DB_PASSWORD}"
+
+    hikari:
+      connection-test-query: SELECT 1
+      maximum-pool-size: 5
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8084
+
+eureka:
+  client:
+    service-url:
+      defaultZone: "${EUREKA_URL:http://localhost:8761/eureka/}"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

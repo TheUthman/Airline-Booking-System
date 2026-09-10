@@ -9,6 +9,14 @@ eureka:
   client:
     register-with-eureka: false
     fetch-registry: false
+    service-url:
+      # Eureka Server still resolves peer URLs even when its client role is
+      # disabled. A valid self URL is required for a single-node registry.
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+
+  server:
+    # A single-node registry has no external peer quorum to preserve.
+    enable-self-preservation: false
 
   instance:
     hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}

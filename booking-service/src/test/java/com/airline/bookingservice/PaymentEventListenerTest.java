@@ -30,4 +30,30 @@ class PaymentEventListenerTest {
         verify(repository).save(booking);
         verify(redis).delete("seat-lock:17:12A");
     }
+
+    @Test
+    void dropsUnparseablePayloadWithoutTouchingTheBooking() {
+        BookingRepository repository = mock(BookingRepository.class);
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+
+        // Poison message: not valid JSON and starting with an unquoted token such as
+        // "the...". Must be ACKed and dropped, never retried or thrown.
+        new PaymentEventListener(repository, redis, new ObjectMapper())
+                .handle("the payment provider returned a maintenance page");
+
+        verifyNoInteractions(repository);
+        verifyNoInteractions(redis);
+    }
+
+    @Test
+    void dropsEmptyPayloadWithoutTouchingTheBooking() {
+        BookingRepository repository = mock(BookingRepository.class);
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+
+        // readTree("") returns null; must be dropped rather than NPE.
+        new PaymentEventListener(repository, redis, new ObjectMapper()).handle("");
+
+        verifyNoInteractions(repository);
+        verifyNoInteractions(redis);
+    }
 }

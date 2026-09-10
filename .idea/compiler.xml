@@ -7,8 +7,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="config-server" />
+        <module name="auth-service" />
         <module name="payment-service" />
-        <module name="authservice" />
         <module name="booking-service" />
         <module name="api-gateway" />
         <module name="passenger-service" />
@@ -23,7 +23,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="admin-service" options="-parameters" />
       <module name="api-gateway" options="-parameters" />
-      <module name="authservice" options="-parameters" />
+      <module name="auth-service" options="-parameters" />
       <module name="booking-service" options="-parameters" />
       <module name="config-server" options="-parameters" />
       <module name="flight-service" options="-parameters" />
