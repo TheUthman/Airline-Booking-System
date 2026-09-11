@@ -9,14 +9,14 @@ spring:
     config:
       server:
         health:
-          enabled: false
+          enabled: true
         native:
-          # All centrally served configuration ships in this application JAR.
-          # Add shared configuration here rather than using an external Git repo.
           search-locations: classpath:/config-repo
 
 server:
+  address: 0.0.0.0
   port: 8888
+
 
 management:
   endpoints:

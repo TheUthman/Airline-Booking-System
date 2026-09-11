@@ -11,7 +11,7 @@
         <module>config-server</module>
         <module>service-registry</module>
         <module>api-gateway</module>
-        <module>auth-service</module>
+        <module>authservice</module>
         <module>flight-service</module>
         <module>passenger-service</module>
         <module>booking-service</module>

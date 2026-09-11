@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/airline_auth}
+    username: ${DB_USERNAME:airline}
+    password: ${DB_PASSWORD:airline_local_password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+  eureka:
+    client:
+      service-url:
+        defaultZone: ${EUREKA_URL:http://service-registry:8761/eureka/}

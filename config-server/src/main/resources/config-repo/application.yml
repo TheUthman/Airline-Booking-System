@@ -1,0 +1,2 @@
+# Shared configuration served locally by Config Server.
+# Service-specific settings remain in each service's own application.yaml.

@@ -37,11 +37,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: airline
       RABBITMQ_DEFAULT_PASS: airline_local_password
-      # Keep the cluster cookie stable when the container is recreated.
       RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-airline-local-erlang-cookie-change-me}
     volumes:
-      # An explicit managed volume prevents RabbitMQ from reusing the anonymous
-      # volume that contains an unreadable .erlang.cookie.
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping >/dev/null 2>&1 || exit 1"]
