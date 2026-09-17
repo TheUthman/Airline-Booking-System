@@ -75,9 +75,7 @@ public class SecurityConfig {
                                                                                 "/api/auth/register",
                                                                                 "/api/auth/login",
                                                                                 "/api/auth/refresh",
-                                                                                // Simulated payment callback: the
-                                                                                // payment service
-                                                                                // validates its shared demo secret.
+                                                                                "/api/payments/initiate",
                                                                                 "/api/payments/webhook")
                                                                 .permitAll()
                                                                 .requestMatchers(

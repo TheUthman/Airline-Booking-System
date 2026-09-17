@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  api-gateway:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  auth-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  flight-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  passenger-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  booking-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  payment-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  notification-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  admin-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+

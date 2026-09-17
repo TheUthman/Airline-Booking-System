@@ -1,194 +1,432 @@
 services:
+
+  # ============================================================
+  # PostgreSQL
+  # ============================================================
   postgres:
     image: postgres:16-alpine
+
     environment:
       POSTGRES_USER: airline
       POSTGRES_PASSWORD: airline_local_password
       POSTGRES_DB: airline_platform
+
     ports:
       - "5432:5432"
+
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U airline -d airline_platform || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U airline -d airline_platform || exit 1"
+        ]
       interval: 5s
       timeout: 3s
       retries: 20
-      start_period: 5s
+      start_period: 10s
+
     restart: unless-stopped
 
+
+  # ============================================================
+  # Redis
+  # ============================================================
   redis:
     image: redis:7-alpine
+
     ports:
       - "6379:6379"
+
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli ping | grep -q PONG || exit 1"
+        ]
       interval: 5s
       timeout: 3s
       retries: 20
+      start_period: 10s
+
     restart: unless-stopped
 
+
+  # ============================================================
+  # RabbitMQ
+  # ============================================================
   rabbitmq:
     image: rabbitmq:4-management-alpine
+
     ports:
       - "5672:5672"
       - "15672:15672"
+
     environment:
       RABBITMQ_DEFAULT_USER: airline
       RABBITMQ_DEFAULT_PASS: airline_local_password
       RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-airline-local-erlang-cookie-change-me}
+
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+
     healthcheck:
-      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping >/dev/null 2>&1 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "rabbitmq-diagnostics -q ping >/dev/null 2>&1 || exit 1"
+        ]
       interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
     restart: unless-stopped
 
+
+  # ============================================================
+  # Config Server
+  # ============================================================
   config-server:
-    build: { context: ., dockerfile: config-server/Dockerfile }
-    ports: ["8888:8888"]
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS --max-time 5 http://localhost:8888/actuator/health >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 20s
-    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: config-server/Dockerfile
 
-  service-registry:
-    build: { context: ., dockerfile: service-registry/Dockerfile }
-    ports: ["8761:8761"]
-    environment:
-      CONFIG_SERVER_URL: http://config-server:8888
-      EUREKA_INSTANCE_HOSTNAME: service-registry
+    ports:
+      - "8888:8888"
+
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS --max-time 5 http://localhost:8761/actuator/health >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS --max-time 5 http://localhost:8888/actuator/health >/dev/null || exit 1"
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 30s
+
     restart: unless-stopped
+
+
+  # ============================================================
+  # Eureka Service Registry
+  # ============================================================
+  service-registry:
+    build:
+      context: .
+      dockerfile: service-registry/Dockerfile
+
+    ports:
+      - "8761:8761"
+
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_INSTANCE_HOSTNAME: service-registry
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS --max-time 5 http://localhost:8761/actuator/health >/dev/null || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+    restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
 
+
+  # ============================================================
+  # API Gateway
+  # ============================================================
   api-gateway:
-    build: { context: ., dockerfile: api-gateway/Dockerfile }
-    ports: ["8080:8080"]
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+
+    ports:
+      - "8080:8080"
+
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your environment}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+
     restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
+
       service-registry:
         condition: service_healthy
 
+
+  # ============================================================
+  # Auth Service
+  # ============================================================
   auth-service:
-    build: { context: ., dockerfile: authservice/Dockerfile }
+    build:
+      context: .
+      dockerfile: authservice/Dockerfile
+
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
+
       DB_URL: jdbc:postgresql://postgres:5432/airline_auth
       DB_USERNAME: airline
       DB_PASSWORD: airline_local_password
+
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your environment}
+
     restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
+
       postgres:
         condition: service_healthy
+
       service-registry:
         condition: service_healthy
 
+
+  # ============================================================
+  # Flight Service
+  # ============================================================
   flight-service:
-    build: { context: ., dockerfile: flight-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, FLIGHT_DB_URL: jdbc:postgresql://postgres:5432/airline_flight, FLIGHT_DB_USERNAME: airline, FLIGHT_DB_PASSWORD: airline_local_password }
+    build:
+      context: .
+      dockerfile: flight-service/Dockerfile
+
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://service-registry:8761/eureka/
+
+      FLIGHT_DB_URL: jdbc:postgresql://postgres:5432/airline_flight
+      FLIGHT_DB_USERNAME: airline
+      FLIGHT_DB_PASSWORD: airline_local_password
+
     restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
+
       postgres:
         condition: service_healthy
+
       service-registry:
         condition: service_healthy
 
+
+  # ============================================================
+  # Passenger Service
+  # ============================================================
   passenger-service:
-    build: { context: ., dockerfile: passenger-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, PASSENGER_DB_URL: jdbc:postgresql://postgres:5432/airline_passenger, PASSENGER_DB_USERNAME: airline, PASSENGER_DB_PASSWORD: airline_local_password }
+    build:
+      context: .
+      dockerfile: passenger-service/Dockerfile
+
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://service-registry:8761/eureka/
+
+      PASSENGER_DB_URL: jdbc:postgresql://postgres:5432/airline_passenger
+      PASSENGER_DB_USERNAME: airline
+      PASSENGER_DB_PASSWORD: airline_local_password
+
     restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
+
       postgres:
         condition: service_healthy
+
       service-registry:
         condition: service_healthy
 
+
+  # ============================================================
+  # Booking Service
+  # ============================================================
   booking-service:
-    build: { context: ., dockerfile: booking-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, BOOKING_DB_URL: jdbc:postgresql://postgres:5432/airline_booking, BOOKING_DB_USERNAME: airline, BOOKING_DB_PASSWORD: airline_local_password, REDIS_HOST: redis, RABBITMQ_HOST: rabbitmq, RABBITMQ_USERNAME: airline, RABBITMQ_PASSWORD: airline_local_password }
+    build:
+      context: .
+      dockerfile: booking-service/Dockerfile
+
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://service-registry:8761/eureka/
+
+      BOOKING_DB_URL: jdbc:postgresql://postgres:5432/airline_booking
+      BOOKING_DB_USERNAME: airline
+      BOOKING_DB_PASSWORD: airline_local_password
+
+      REDIS_HOST: redis
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: airline
+      RABBITMQ_PASSWORD: airline_local_password
+
     restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
+
       postgres:
         condition: service_healthy
+
       redis:
         condition: service_healthy
+
       rabbitmq:
         condition: service_healthy
+
       service-registry:
         condition: service_healthy
 
+
+  # ============================================================
+  # Payment Service
+  # ============================================================
   payment-service:
-    build: { context: ., dockerfile: payment-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/airline_payment, PAYMENT_DB_USERNAME: airline, PAYMENT_DB_PASSWORD: airline_local_password, RABBITMQ_HOST: rabbitmq, RABBITMQ_USERNAME: airline, RABBITMQ_PASSWORD: airline_local_password, PAYMENT_WEBHOOK_SECRET: "${PAYMENT_WEBHOOK_SECRET:?Set PAYMENT_WEBHOOK_SECRET in your environment}" }
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://service-registry:8761/eureka/
+
+      PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/airline_payment
+      PAYMENT_DB_USERNAME: airline
+      PAYMENT_DB_PASSWORD: airline_local_password
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: airline
+      RABBITMQ_PASSWORD: airline_local_password
+
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:?Set PAYMENT_WEBHOOK_SECRET in your environment}
+
     restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
+
       postgres:
         condition: service_healthy
+
       rabbitmq:
         condition: service_healthy
+
       service-registry:
         condition: service_healthy
 
+
+  # ============================================================
+  # Notification Service
+  # ============================================================
   notification-service:
-    build: { context: ., dockerfile: notification-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/airline_notification, NOTIFICATION_DB_USERNAME: airline, NOTIFICATION_DB_PASSWORD: airline_local_password, RABBITMQ_HOST: rabbitmq, RABBITMQ_USERNAME: airline, RABBITMQ_PASSWORD: airline_local_password, MAILGUN_API_KEY: "${MAILGUN_API_KEY:-}", MAILGUN_DOMAIN: "${MAILGUN_DOMAIN:-}", MAILGUN_BASE_URL: "${MAILGUN_BASE_URL:-https://api.mailgun.net}", EMAIL_FROM: "${EMAIL_FROM:-Airline Booking <postmaster@sandbox.mailgun.org>}" }
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://service-registry:8761/eureka/
+
+      NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/airline_notification
+      NOTIFICATION_DB_USERNAME: airline
+      NOTIFICATION_DB_PASSWORD: airline_local_password
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: airline
+      RABBITMQ_PASSWORD: airline_local_password
+
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-}
+      MAILGUN_BASE_URL: ${MAILGUN_BASE_URL:-https://api.mailgun.net}
+      EMAIL_FROM: ${EMAIL_FROM:-Airline Booking <postmaster@sandbox.mailgun.org>}
+
     restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
+
       postgres:
         condition: service_healthy
+
       rabbitmq:
         condition: service_healthy
+
       service-registry:
         condition: service_healthy
 
+
+  # ============================================================
+  # Admin Service
+  # ============================================================
   admin-service:
-    build: { context: ., dockerfile: admin-service/Dockerfile }
-    environment: { CONFIG_SERVER_URL: http://config-server:8888, EUREKA_URL: http://service-registry:8761/eureka/, ADMIN_DB_URL: jdbc:postgresql://postgres:5432/airline_admin, ADMIN_DB_USERNAME: airline, ADMIN_DB_PASSWORD: airline_local_password }
+    build:
+      context: .
+      dockerfile: admin-service/Dockerfile
+
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://service-registry:8761/eureka/
+
+      ADMIN_DB_URL: jdbc:postgresql://postgres:5432/airline_admin
+      ADMIN_DB_USERNAME: airline
+      ADMIN_DB_PASSWORD: airline_local_password
+
     restart: unless-stopped
+
     depends_on:
       config-server:
         condition: service_healthy
+
       postgres:
         condition: service_healthy
+
       service-registry:
         condition: service_healthy
 
+
+  # ============================================================
+  # MailHog
+  # Local email testing
+  # ============================================================
+  mailhog:
+    image: mailhog/mailhog:latest
+
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+    restart: unless-stopped
+
+
+# ==============================================================
+# Persistent Volumes
+# ==============================================================
 volumes:
   postgres-data:
   rabbitmq-data:
