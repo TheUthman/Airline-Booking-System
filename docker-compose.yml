@@ -235,6 +235,20 @@ services:
   # ============================================================
   # Passenger Service
   # ============================================================
+  pricing-service:
+    build:
+      context: .
+      dockerfile: pricing-service/Dockerfile
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://service-registry:8761/eureka/
+    restart: unless-stopped
+    depends_on:
+      config-server:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+
   passenger-service:
     build:
       context: .

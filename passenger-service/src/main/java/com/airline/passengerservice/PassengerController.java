@@ -24,6 +24,19 @@ public class PassengerController {
         return repository.findByOwnerEmail(email);
     }
 
+    @GetMapping("/saved-travelers")
+    List<Passenger> savedTravelers(@RequestHeader("X-User-Email") String email) {
+        return repository.findByOwnerEmail(email).stream().filter(Passenger::isSavedTraveler).toList();
+    }
+
+    @PostMapping("/{id}/points")
+    Passenger adjustPoints(@PathVariable Long id, @RequestHeader("X-User-Email") String email,
+            @RequestParam @Min(1) int points) {
+        Passenger p = owned(id, email);
+        p.setFrequentFlyerPoints(p.getFrequentFlyerPoints() + points);
+        return repository.save(p);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     Passenger create(
@@ -40,13 +53,7 @@ public class PassengerController {
             @PathVariable Long id,
             @RequestHeader("X-User-Email") String email,
             @Valid @RequestBody PassengerRequest request) {
-        Passenger p =
-                repository
-                        .findByIdAndOwnerEmail(id, email)
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "Passenger not found"));
+        Passenger p = owned(id, email);
         copy(p, request);
         return repository.save(p);
     }
@@ -57,6 +64,14 @@ public class PassengerController {
         p.setDateOfBirth(r.dateOfBirth());
         p.setPhone(r.phone());
         p.setDocumentNumber(r.documentNumber());
+        p.setPassportNationality(r.passportNationality());
+        p.setPassportExpiryDate(r.passportExpiryDate());
+        p.setSavedTraveler(r.savedTraveler());
+    }
+
+    private Passenger owned(Long id, String email) {
+        return repository.findByIdAndOwnerEmail(id, email).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Passenger not found"));
     }
 
     record PassengerRequest(
@@ -64,5 +79,8 @@ public class PassengerController {
             @NotBlank String lastName,
             @NotNull @Past LocalDate dateOfBirth,
             String phone,
-            String documentNumber) {}
+            String documentNumber,
+            String passportNationality,
+            LocalDate passportExpiryDate,
+            boolean savedTraveler) {}
 }

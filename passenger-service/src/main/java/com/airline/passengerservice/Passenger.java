@@ -27,6 +27,12 @@ public class Passenger {
 
     private String phone;
     private String documentNumber;
+    private String passportNationality;
+    private LocalDate passportExpiryDate;
+    @Column(nullable = false)
+    private int frequentFlyerPoints = 0;
+    @Column(nullable = false)
+    private boolean savedTraveler = true;
 
     public Long getId() {
         return id;
@@ -79,4 +85,12 @@ public class Passenger {
     public void setDocumentNumber(String v) {
         documentNumber = v;
     }
+    public String getPassportNationality() { return passportNationality; }
+    public void setPassportNationality(String v) { passportNationality = v; }
+    public LocalDate getPassportExpiryDate() { return passportExpiryDate; }
+    public void setPassportExpiryDate(LocalDate v) { passportExpiryDate = v; }
+    public int getFrequentFlyerPoints() { return frequentFlyerPoints; }
+    public void setFrequentFlyerPoints(int v) { frequentFlyerPoints = v; }
+    public boolean isSavedTraveler() { return savedTraveler; }
+    public void setSavedTraveler(boolean v) { savedTraveler = v; }
 }

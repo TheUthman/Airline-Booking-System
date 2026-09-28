@@ -37,6 +37,14 @@ public class Flight {
     private int availableSeats;
 
     @Column(nullable = false)
+    private int totalSeats;
+
+    private String airline;
+    private String aircraftCode;
+    private String status = "SCHEDULED";
+    private Integer delayMinutes = 0;
+
+    @Column(nullable = false)
     private boolean active = true;
 
     public Long getId() {
@@ -98,6 +106,17 @@ public class Flight {
     public void setAvailableSeats(int v) {
         availableSeats = v;
     }
+
+    public int getTotalSeats() { return totalSeats; }
+    public void setTotalSeats(int v) { totalSeats = v; }
+    public String getAirline() { return airline; }
+    public void setAirline(String v) { airline = v; }
+    public String getAircraftCode() { return aircraftCode; }
+    public void setAircraftCode(String v) { aircraftCode = v; }
+    public String getStatus() { return status; }
+    public void setStatus(String v) { status = v; }
+    public Integer getDelayMinutes() { return delayMinutes; }
+    public void setDelayMinutes(Integer v) { delayMinutes = v; }
 
     public boolean isActive() {
         return active;

@@ -14,6 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -61,4 +64,33 @@ public class AuthController {
                         "email", promoted.getEmail(),
                         "role", promoted.getRole().name()));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody EmailRequest request) {
+        authService.requestPasswordReset(request.email());
+        // Do not disclose whether an account exists; notification-service delivers the reset link.
+        return ResponseEntity.accepted().body(Map.of("message", "If the account exists, a reset email will be sent"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.password());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/verification")
+    public ResponseEntity<Map<String, String>> requestVerification(@Valid @RequestBody EmailRequest request) {
+        authService.requestEmailVerification(request.email());
+        return ResponseEntity.accepted().body(Map.of("message", "Verification email requested"));
+    }
+
+    @PostMapping("/verification/confirm")
+    public ResponseEntity<Void> confirmVerification(@Valid @RequestBody VerificationRequest request) {
+        authService.verifyEmail(request.token());
+        return ResponseEntity.noContent().build();
+    }
+
+    record EmailRequest(@Email @NotBlank String email) {}
+    record VerificationRequest(@NotBlank String token) {}
+    record ResetPasswordRequest(@NotBlank String token, @NotBlank @Size(min = 8) String password) {}
 }

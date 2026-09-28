@@ -32,6 +32,11 @@ spring:
                     id: flightServiceCircuitBreaker
                     fallbackUri: forward:/fallback/flight-service
 
+            - id: pricing-service
+              uri: lb://PRICING-SERVICE
+              predicates:
+                - Path=/api/pricing/**
+
             # =========================
             # PASSENGER SERVICE
             # =========================
@@ -91,6 +96,9 @@ jwt:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+
+rate-limit:
+  requests-per-minute: ${GATEWAY_REQUESTS_PER_MINUTE:120}
 
 
 # =========================

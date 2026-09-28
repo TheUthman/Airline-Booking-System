@@ -51,6 +51,31 @@ public class PaymentController {
         return repository.save(p);
     }
 
+    @GetMapping
+    List<Payment> history(@RequestHeader("X-User-Email") String email) {
+        return repository.findByOwnerEmailOrderByCreatedAtDesc(email);
+    }
+
+    @PostMapping("/{id}/refund")
+    Payment refund(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
+        Payment payment = repository.findByIdAndOwnerEmail(id, email).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
+        if (payment.getStatus() != PaymentStatus.SUCCEEDED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only successful payments can be refunded");
+        }
+        payment.setStatus(PaymentStatus.REFUNDED);
+        return repository.save(payment);
+    }
+
+    @GetMapping("/{id}/invoice")
+    Map<String, Object> invoice(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
+        Payment payment = repository.findByIdAndOwnerEmail(id, email).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
+        return Map.of("invoiceNumber", "INV-" + payment.getId(), "paymentReference", payment.getProviderReference(),
+                "bookingId", payment.getBookingId(), "amount", payment.getAmount(), "status", payment.getStatus(),
+                "issuedAt", payment.getCreatedAt());
+    }
+
     @PostMapping("/webhook")
     ResponseEntity<Void> webhook(
             @RequestHeader("X-Payment-Webhook-Secret") String secret,

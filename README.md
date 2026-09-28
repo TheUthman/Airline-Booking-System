@@ -8,6 +8,8 @@ API errors use the same timestamp/status/error/message/path response shape.
 
 The gateway API contract is available as [OpenAPI 3.0 YAML](docs/openapi.yaml); import it into Swagger Editor, Postman, or another OpenAPI client to view and exercise the documented endpoints.
 
+Internal service-boundary and package conventions are described in [architecture.md](docs/architecture.md).
+
 ## Services
 
 | Service | Port | Responsibility |
@@ -17,6 +19,7 @@ The gateway API contract is available as [OpenAPI 3.0 YAML](docs/openapi.yaml); 
 | Config Server | 8888 | Central configuration endpoint (served from this repository) |
 | Auth Service | 8082 | Registration, login and refresh tokens |
 | Flight Service | 8083 | Flight search and admin flight schedules |
+| Pricing Service | 8089 | Dynamic flight quote calculation |
 | Passenger Service | 8084 | Traveller profiles and documents |
 | Booking Service | 8085 | PNRs, pending reservations and Redis seat locks |
 | Payment Service | 8086 | Payment intents, webhook verification and payment events |
@@ -39,8 +42,16 @@ Set `CORS_ALLOWED_ORIGINS` to the exact Vercel or Netlify frontend URL when depl
 1. `POST /api/auth/register` or `/api/auth/login` returns access and refresh tokens.
 2. Send `Authorization: Bearer <access-token>` for protected requests.
 3. Search with `GET /api/flights/search?origin=LOS&destination=ABV&date=2026-09-01&passengers=1`.
-4. Create passenger profiles at `POST /api/passengers`, then a pending reservation at `POST /api/bookings`.
-5. Create a payment at `POST /api/payments/initiate`. A trusted provider callback calls `POST /api/payments/webhook`, which publishes `payment.succeeded` or `payment.failed` to RabbitMQ. Booking Service confirms or releases the reservation accordingly.
+4. Quote a live fare with `POST /api/pricing/quote`; use the flight's base fare, available/total seats and traveller options.
+5. Create passenger profiles at `POST /api/passengers`, then a pending reservation at `POST /api/bookings`.
+6. Create a payment at `POST /api/payments/initiate`. A trusted provider callback calls `POST /api/payments/webhook`, which publishes `payment.succeeded` or `payment.failed` to RabbitMQ. Booking Service confirms or releases the reservation accordingly.
+
+## Backend additions
+
+- Gateway rate limiting defaults to 120 requests per client IP per minute; set `GATEWAY_REQUESTS_PER_MINUTE` to change it.
+- Auth supports password-reset and email-verification request/confirmation endpoints. A production deployment should have notification-service send the generated links through its configured mail provider.
+- Flight search accepts optional `airline`, `maxPrice`, and `maxDurationMinutes` filters. Administrators can delay or cancel flights.
+- Passenger profiles hold passport metadata, saved-traveller status, and frequent-flyer points. Group bookings, pending-booking upgrades, payment history, refunds, and invoice views are also available.
 
 The webhook endpoint is intentionally not a frontend endpoint. Replace the development callback validation with the payment provider's signed-webhook verification before production.
 

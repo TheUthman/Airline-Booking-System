@@ -24,12 +24,18 @@ public class FlightController {
             @RequestParam @Pattern(regexp = "[A-Za-z]{3}") String origin,
             @RequestParam @Pattern(regexp = "[A-Za-z]{3}") String destination,
             @RequestParam LocalDate date,
-            @RequestParam(defaultValue = "1") @Min(1) int passengers) {
+            @RequestParam(defaultValue = "1") @Min(1) int passengers,
+            @RequestParam(required = false) String airline,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Integer maxDurationMinutes) {
         return flights
                 .findByOriginIgnoreCaseAndDestinationIgnoreCaseAndDepartureTimeBetweenAndActiveTrue(
                         origin, destination, date.atStartOfDay(), date.plusDays(1).atStartOfDay())
                 .stream()
                 .filter(f -> f.getAvailableSeats() >= passengers)
+                .filter(f -> airline == null || airline.isBlank() || airline.equalsIgnoreCase(f.getAirline()))
+                .filter(f -> maxPrice == null || f.getFare().compareTo(maxPrice) <= 0)
+                .filter(f -> maxDurationMinutes == null || Duration.between(f.getDepartureTime(), f.getArrivalTime()).toMinutes() <= maxDurationMinutes)
                 .toList();
     }
 
@@ -53,6 +59,24 @@ public class FlightController {
         return flights.save(f);
     }
 
+    @PostMapping("/admin/{id}/delay")
+    public Flight delay(@PathVariable Long id, @RequestParam @Min(1) int minutes) {
+        Flight f = one(id);
+        f.setDelayMinutes((f.getDelayMinutes() == null ? 0 : f.getDelayMinutes()) + minutes);
+        f.setDepartureTime(f.getDepartureTime().plusMinutes(minutes));
+        f.setArrivalTime(f.getArrivalTime().plusMinutes(minutes));
+        f.setStatus("DELAYED");
+        return flights.save(f);
+    }
+
+    @PostMapping("/admin/{id}/cancel")
+    public Flight cancel(@PathVariable Long id) {
+        Flight f = one(id);
+        f.setActive(false);
+        f.setStatus("CANCELLED");
+        return flights.save(f);
+    }
+
     private void apply(Flight f, FlightRequest r) {
         f.setFlightNumber(r.flightNumber());
         f.setOrigin(r.origin().toUpperCase());
@@ -61,6 +85,9 @@ public class FlightController {
         f.setArrivalTime(r.arrivalTime());
         f.setFare(r.fare());
         f.setAvailableSeats(r.availableSeats());
+        f.setTotalSeats(r.totalSeats());
+        f.setAirline(r.airline());
+        f.setAircraftCode(r.aircraftCode());
     }
 
     record FlightRequest(
@@ -70,7 +97,10 @@ public class FlightController {
             @NotNull LocalDateTime departureTime,
             @NotNull LocalDateTime arrivalTime,
             @NotNull @PositiveOrZero BigDecimal fare,
-            @Min(0) int availableSeats) {}
+            @Min(0) int availableSeats,
+            @Min(1) int totalSeats,
+            @NotBlank String airline,
+            String aircraftCode) {}
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     static class FlightNotFoundException extends RuntimeException {

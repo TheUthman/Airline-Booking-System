@@ -37,6 +37,14 @@ public class User {
     @Column(nullable = false)
     private boolean emailVerified = false;
 
+    @Column(length = 128)
+    private String emailVerificationToken;
+
+    @Column(length = 128)
+    private String passwordResetToken;
+
+    private LocalDateTime passwordResetExpiresAt;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -128,6 +136,13 @@ public class User {
     public void setEmailVerified(boolean emailVerified) {
         this.emailVerified = emailVerified;
     }
+
+    public String getEmailVerificationToken() { return emailVerificationToken; }
+    public void setEmailVerificationToken(String value) { this.emailVerificationToken = value; }
+    public String getPasswordResetToken() { return passwordResetToken; }
+    public void setPasswordResetToken(String value) { this.passwordResetToken = value; }
+    public LocalDateTime getPasswordResetExpiresAt() { return passwordResetExpiresAt; }
+    public void setPasswordResetExpiresAt(LocalDateTime value) { this.passwordResetExpiresAt = value; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

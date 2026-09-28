@@ -75,6 +75,10 @@ public class SecurityConfig {
                                                                                 "/api/auth/register",
                                                                                 "/api/auth/login",
                                                                                 "/api/auth/refresh",
+                                                                                "/api/auth/forgot-password",
+                                                                                "/api/auth/reset-password",
+                                                                                "/api/auth/verification",
+                                                                                "/api/auth/verification/confirm",
                                                                                 "/api/payments/initiate",
                                                                                 "/api/payments/webhook")
                                                                 .permitAll()

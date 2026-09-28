@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -172,5 +173,45 @@ public class AuthService {
         user.setRole(Role.ADMIN);
 
         return userRepository.save(user);
+    }
+
+    /** Creates a one-time token. Delivery is delegated to notification-service by the caller. */
+    public String requestPasswordReset(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new BadCredentialsException("No account exists for this email"));
+        String token = UUID.randomUUID().toString().replace("-", "");
+        user.setPasswordResetToken(token);
+        user.setPasswordResetExpiresAt(LocalDateTime.now().plusMinutes(30));
+        userRepository.save(user);
+        return token;
+    }
+
+    public void resetPassword(String token, String password) {
+        User user = userRepository.findByPasswordResetToken(token).orElseThrow(
+                () -> new BadCredentialsException("Invalid password reset token"));
+        if (user.getPasswordResetExpiresAt() == null || user.getPasswordResetExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BadCredentialsException("Password reset token has expired");
+        }
+        user.setPassword(passwordEncoder.encode(password));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiresAt(null);
+        userRepository.save(user);
+    }
+
+    public String requestEmailVerification(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new BadCredentialsException("No account exists for this email"));
+        String token = UUID.randomUUID().toString().replace("-", "");
+        user.setEmailVerificationToken(token);
+        userRepository.save(user);
+        return token;
+    }
+
+    public void verifyEmail(String token) {
+        User user = userRepository.findByEmailVerificationToken(token).orElseThrow(
+                () -> new BadCredentialsException("Invalid verification token"));
+        user.setEmailVerified(true);
+        user.setEmailVerificationToken(null);
+        userRepository.save(user);
     }
 }

@@ -14,6 +14,15 @@ This document lists every public HTTP endpoint exposed by the micro‑services i
 
 ---
 
+## Pricing Service (`pricing-service`)
+| Method | URL | Description | Request Body | Success Response |
+|--------|-----|-------------|--------------|------------------|
+| `POST` | `/api/pricing/quote` | Calculate a dynamic quote without changing the flight's stored base fare. The calculator applies advance-purchase, load-factor, cabin, promo-code, and frequent-flyer-point rules. | `{"flightId":123,"baseFare":199.99,"departureDate":"2026-10-01","availableSeats":30,"totalSeats":180,"cabin":"ECONOMY","promoCode":"WELCOME10","frequentFlyerPoints":500}` | `200 OK` → base fare, applied multiplier, discounts, total, and rules used. |
+
+Pricing rules: departures within 3 days add 35%; 4–14 days add 15%; 65%/85%+ occupied flights add 10%/25%; BUSINESS and FIRST class apply 1.80× and 2.75× multipliers. `WELCOME10` grants 10%, and every 100 frequent-flyer points offsets one currency unit, capped at 100.
+
+---
+
 ## Passenger Service (`passenger-service`)
 | Method | URL | Description | Request Body | Success Response |
 |--------|-----|-------------|--------------|------------------|

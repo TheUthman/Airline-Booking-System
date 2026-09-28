@@ -16,6 +16,7 @@
         <module name="admin-service" />
         <module name="flight-service" />
         <module name="notification-service" />
+        <module name="pricing-service" />
       </profile>
     </annotationProcessing>
   </component>
@@ -30,6 +31,7 @@
       <module name="notification-service" options="-parameters" />
       <module name="passenger-service" options="-parameters" />
       <module name="payment-service" options="-parameters" />
+      <module name="pricing-service" options="-parameters" />
       <module name="service-registry" options="-parameters" />
     </option>
   </component>

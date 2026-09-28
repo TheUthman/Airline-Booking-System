@@ -13,6 +13,7 @@
         <module>api-gateway</module>
         <module>authservice</module>
         <module>flight-service</module>
+        <module>pricing-service</module>
         <module>passenger-service</module>
         <module>booking-service</module>
         <module>payment-service</module>
