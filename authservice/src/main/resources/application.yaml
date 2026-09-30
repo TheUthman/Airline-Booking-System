@@ -34,8 +34,7 @@ eureka:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
 
 jwt:
-  # Set JWT_SECRET in every deployed environment. The fallback is for local development only.
-  secret: ${JWT_SECRET:development-only-jwt-secret-change-before-production-2026}
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION_MS:900000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000}
 
