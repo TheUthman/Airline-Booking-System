@@ -366,7 +366,7 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
-      NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/airline_notification
+      NOTIFICATION_DB_URL: jdbc:postgresql://airline:3Yd812fVpa5fCmNNY83cLaLzQB0Q6XMC@dpg-daug1th7lnhs73b7s25g-a/airline_platform:5432/airline_notification
       NOTIFICATION_DB_USERNAME: airline
       NOTIFICATION_DB_PASSWORD: airline_local_password
 
@@ -407,7 +407,7 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
-      ADMIN_DB_URL: jdbc:postgresql://postgres:5432/airline_admin
+      ADMIN_DB_URL: jdbc:postgresql://airline:3Yd812fVpa5fCmNNY83cLaLzQB0Q6XMC@dpg-daug1th7lnhs73b7s25g-a/airline_platform:5432/airline_admin
       ADMIN_DB_USERNAME: airline
       ADMIN_DB_PASSWORD: airline_local_password
 
