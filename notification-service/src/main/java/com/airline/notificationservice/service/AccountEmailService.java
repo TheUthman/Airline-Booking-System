@@ -79,6 +79,17 @@ public class AccountEmailService {
             variables.put("userName", request.userName());
             variables.put("verificationUrl", request.verificationUrl());
 
+            String token = "";
+            if (request.verificationUrl() != null && request.verificationUrl().contains("token=")) {
+                int idx = request.verificationUrl().indexOf("token=");
+                token = request.verificationUrl().substring(idx + 6);
+                int ampIdx = token.indexOf('&');
+                if (ampIdx != -1) {
+                    token = token.substring(0, ampIdx);
+                }
+            }
+            variables.put("token", token);
+
             String htmlBody = templateEngine.render("account-verification", variables);
             String subject = "Verify Your Airline Account";
 

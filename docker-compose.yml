@@ -98,6 +98,9 @@ services:
     ports:
       - "8888:8888"
 
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
+
     healthcheck:
       test:
         [
@@ -124,6 +127,7 @@ services:
       - "8761:8761"
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_INSTANCE_HOSTNAME: service-registry
 
@@ -157,6 +161,7 @@ services:
       - "8080:8080"
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your environment}
@@ -181,6 +186,7 @@ services:
       dockerfile: authservice/Dockerfile
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
@@ -189,6 +195,8 @@ services:
       DB_PASSWORD: airline_local_password
 
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your environment}
+      NOTIFICATION_SERVICE_URL: ${NOTIFICATION_SERVICE_URL:-http://notification-service:8087}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
 
     restart: unless-stopped
 
@@ -212,6 +220,7 @@ services:
       dockerfile: flight-service/Dockerfile
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
@@ -240,6 +249,7 @@ services:
       context: .
       dockerfile: pricing-service/Dockerfile
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
     restart: unless-stopped
@@ -255,6 +265,7 @@ services:
       dockerfile: passenger-service/Dockerfile
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
@@ -284,6 +295,7 @@ services:
       dockerfile: booking-service/Dockerfile
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
@@ -325,6 +337,7 @@ services:
       dockerfile: payment-service/Dockerfile
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
@@ -363,10 +376,11 @@ services:
       dockerfile: notification-service/Dockerfile
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
-      NOTIFICATION_DB_URL: jdbc:postgresql://airline:3Yd812fVpa5fCmNNY83cLaLzQB0Q6XMC@dpg-daug1th7lnhs73b7s25g-a/airline_platform:5432/airline_notification
+      NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/airline_notification
       NOTIFICATION_DB_USERNAME: airline
       NOTIFICATION_DB_PASSWORD: airline_local_password
 
@@ -377,7 +391,10 @@ services:
       MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
       MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-}
       MAILGUN_BASE_URL: ${MAILGUN_BASE_URL:-https://api.mailgun.net}
-      EMAIL_FROM: ${EMAIL_FROM:-Airline Booking <postmaster@sandbox.mailgun.org>}
+      EMAIL_FROM: ${EMAIL_FROM:-Airline Booking <postmaster@sandbox081648b71024432398a2692c629e0356.mailgun.org>}
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_ENABLED: ${SMTP_ENABLED:-true}
 
     restart: unless-stopped
 
@@ -394,6 +411,9 @@ services:
       service-registry:
         condition: service_healthy
 
+      mailhog:
+        condition: service_started
+
 
   # ============================================================
   # Admin Service
@@ -404,10 +424,11 @@ services:
       dockerfile: admin-service/Dockerfile
 
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m -XX:+UseSerialGC"
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://service-registry:8761/eureka/
 
-      ADMIN_DB_URL: jdbc:postgresql://airline:3Yd812fVpa5fCmNNY83cLaLzQB0Q6XMC@dpg-daug1th7lnhs73b7s25g-a/airline_platform:5432/airline_admin
+      ADMIN_DB_URL: jdbc:postgresql://postgres:5432/airline_admin
       ADMIN_DB_USERNAME: airline
       ADMIN_DB_PASSWORD: airline_local_password
 

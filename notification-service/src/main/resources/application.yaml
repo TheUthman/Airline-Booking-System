@@ -4,11 +4,19 @@ spring:
   datasource: { url: "${NOTIFICATION_DB_URL:jdbc:h2:file:./data/notification-db;MODE=PostgreSQL;AUTO_SERVER=TRUE}", username: "${NOTIFICATION_DB_USERNAME:sa}", password: "${NOTIFICATION_DB_PASSWORD:}" }
   jpa: { hibernate: { ddl-auto: update }, open-in-view: false }
   rabbitmq: { host: "${RABBITMQ_HOST:localhost}", port: "${RABBITMQ_PORT:5672}", username: "${RABBITMQ_USERNAME:guest}", password: "${RABBITMQ_PASSWORD:guest}" }
+  mail:
+    host: "${SMTP_HOST:localhost}"
+    port: "${SMTP_PORT:1025}"
+    default-encoding: UTF-8
 server: { port: 8087 }
 notifications:
   mailgun:
     api-key: "${MAILGUN_API_KEY:}"
     domain: "${MAILGUN_DOMAIN:}"
     base-url: "${MAILGUN_BASE_URL:https://api.mailgun.net}"
-    from: "${EMAIL_FROM:Airline Booking <postmaster@sandbox.mailgun.org>}"
+    from: "${EMAIL_FROM:Airline Booking <postmaster@sandbox081648b71024432398a2692c629e0356.mailgun.org>}"
+  smtp:
+    enabled: "${SMTP_ENABLED:true}"
+    from: "${EMAIL_FROM:Airline Booking <noreply@tigerairlines.com>}"
 eureka: { client: { service-url: { defaultZone: "${EUREKA_URL:http://localhost:8761/eureka/}" } } }
+

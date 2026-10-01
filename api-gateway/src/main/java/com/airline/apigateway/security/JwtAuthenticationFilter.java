@@ -57,13 +57,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path == null
-                || path.equals("/error")
-                || path.startsWith("/actuator")
-                || path.startsWith("/api/auth/")
-                || path.startsWith("/api/payments/webhook")
-                || ("GET".equalsIgnoreCase(request.getMethod())
-                        && path.startsWith("/api/flights/"));
+        if (path == null) {
+            return true;
+        }
+        if (path.equals("/error") || path.startsWith("/actuator") || path.startsWith("/fallback")) {
+            return true;
+        }
+        if (path.equals("/api/payments/webhook")) {
+            return true;
+        }
+        if (path.equals("/api/auth/register")
+                || path.equals("/api/auth/login")
+                || path.equals("/api/auth/refresh")
+                || path.equals("/api/auth/forgot-password")
+                || path.equals("/api/auth/reset-password")
+                || path.equals("/api/auth/verification")
+                || path.equals("/api/auth/verification/confirm")) {
+            return true;
+        }
+        if ("GET".equalsIgnoreCase(request.getMethod())) {
+            if (path.equals("/api/flights")
+                    || (path.startsWith("/api/flights/") && !path.startsWith("/api/flights/admin"))) {
+                return true;
+            }
+            if (path.startsWith("/api/bookings/pnr/") || path.equals("/api/bookings/search")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

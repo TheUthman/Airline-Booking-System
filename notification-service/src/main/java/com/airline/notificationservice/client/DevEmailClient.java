@@ -5,8 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
-@Component
-@ConditionalOnMissingBean(EmailClient.class)
+@Component("devEmailClient")
 public class DevEmailClient implements EmailClient {
 
     private static final Logger log = LoggerFactory.getLogger(DevEmailClient.class);

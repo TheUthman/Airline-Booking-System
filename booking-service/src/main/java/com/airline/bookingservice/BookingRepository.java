@@ -8,4 +8,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByOwnerEmailOrderByCreatedAtDesc(String ownerEmail);
 
     Optional<Booking> findByIdAndOwnerEmail(Long id, String ownerEmail);
+
+    Optional<Booking> findByPnrIgnoreCase(String pnr);
 }

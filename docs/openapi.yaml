@@ -1,79 +1,1173 @@
 openapi: 3.0.3
 info:
   title: Airline Booking System API
-  version: 1.0.0
-  description: All public calls go through the API Gateway. Protected endpoints require a Bearer access token.
+  version: 1.1.0
+  description: |
+    Contract for the Airline Booking System gateway (http://localhost:8080). All calls go through
+    the API Gateway; it validates JWTs, enforces ADMIN roles and routes to the micro-services.
+    Protected endpoints require `Authorization: Bearer <jwt>`. The gateway injects the
+    `X-User-Email` and `X-User-Role` headers for the services, so clients do not send them.
+    All errors use a uniform body: {"timestamp","status","error","message","path"}.
 servers:
   - url: http://localhost:8080
+    description: API Gateway (the only backend URL a frontend should call)
 security:
   - bearerAuth: []
+tags:
+  - name: Auth
+    description: Registration, login, token refresh, password reset and email verification
+  - name: Flights
+    description: Flight search, schedules and admin flight operations
+  - name: Pricing
+    description: Dynamic fare quote calculation
+  - name: Passengers
+    description: Traveller profiles, documents and frequent-flyer points
+  - name: Bookings
+    description: Reservations, PNRs, seat locks, group bookings and upgrades
+  - name: Payments
+    description: Payment intents, history, refunds, invoices and the provider webhook
+  - name: Notifications
+    description: Stored delivery logs and ad-hoc email dispatch
+  - name: Admin
+    description: Operational dashboard and audit actions
 paths:
+  # ----------------------------- Auth Service -----------------------------
   /api/auth/register:
     post:
+      tags: [Auth]
       security: []
       summary: Register a passenger account
-      responses: { '201': { description: Account and tokens created } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Account created; access and refresh tokens issued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /api/auth/login:
     post:
+      tags: [Auth]
       security: []
-      summary: Authenticate and issue tokens
-      responses: { '200': { description: Tokens issued } }
+      summary: Authenticate with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Tokens issued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
   /api/auth/refresh:
     post:
+      tags: [Auth]
       security: []
-      summary: Exchange a refresh token for an access token
-      responses: { '200': { description: Access token renewed } }
+      summary: Exchange a refresh token for a new access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+      responses:
+        '200':
+          description: Tokens renewed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/auth/promote/{userId}:
+    post:
+      tags: [Auth]
+      summary: Promote an existing user to ADMIN
+      description: ADMIN only - enforced by the gateway (`X-User-Role` must be ADMIN).
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 }, description: User identifier }
+      responses:
+        '200':
+          description: User promoted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: User promoted to ADMIN }
+                  userId: { type: integer, format: int64 }
+                  email: { type: string, format: email }
+                  role: { type: string, example: ADMIN }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Request a password-reset email (no account disclosure)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EmailRequest' }
+      responses:
+        '202':
+          description: Accepted - reset email queued if the account exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: If the account exists, a reset email will be sent }
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Set a new password with the emailed token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResetPasswordRequest' }
+      responses:
+        '204': { description: Password updated }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/auth/verification:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Request the account-verification email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EmailRequest' }
+      responses:
+        '202':
+          description: Accepted - verification email requested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: Verification email requested }
+  /api/auth/verification/confirm:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Verify the account with the emailed token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerificationRequest' }
+      responses:
+        '204': { description: Account verified }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  # ----------------------------- Flight Service -----------------------------
   /api/flights/search:
     get:
+      tags: [Flights]
       security: []
       summary: Search active flights
       parameters:
-        - { name: origin, in: query, required: true, schema: { type: string, minLength: 3, maxLength: 3 } }
-        - { name: destination, in: query, required: true, schema: { type: string, minLength: 3, maxLength: 3 } }
-        - { name: date, in: query, required: true, schema: { type: string, format: date } }
-      responses: { '200': { description: Matching flights } }
-  /api/passengers:
+        - { name: origin, in: query, required: true, schema: { type: string, minLength: 3, maxLength: 3 }, description: Departure airport code }
+        - { name: destination, in: query, required: true, schema: { type: string, minLength: 3, maxLength: 3 }, description: Arrival airport code }
+        - { name: date, in: query, required: true, schema: { type: string, format: date }, description: Departure date }
+        - { name: passengers, in: query, required: false, schema: { type: integer, minimum: 1, default: 1 }, description: Required available seats }
+        - { name: airline, in: query, required: false, schema: { type: string }, description: Optional airline filter }
+        - { name: maxPrice, in: query, required: false, schema: { type: number, format: double }, description: Optional max fare filter }
+        - { name: maxDurationMinutes, in: query, required: false, schema: { type: integer }, description: Optional max flight duration filter }
+      responses:
+        '200':
+          description: Matching flights
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Flight' }
+  /api/flights/{id}:
+    get:
+      tags: [Flights]
+      security: []
+      summary: Retrieve flight details by ID
+      parameters:
+        - { $ref: '#/components/parameters/FlightId' }
+      responses:
+        '200':
+          description: Flight object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Flight' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/flights/admin:
     post:
-      summary: Create a traveller profile
-      responses: { '201': { description: Traveller created } }
+      tags: [Flights]
+      summary: Create a flight (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FlightRequest' }
+      responses:
+        '201':
+          description: Flight created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Flight' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/flights/admin/{id}:
+    put:
+      tags: [Flights]
+      summary: Update a flight (ADMIN)
+      parameters:
+        - { $ref: '#/components/parameters/FlightId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FlightRequest' }
+      responses:
+        '200':
+          description: Flight updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Flight' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/flights/admin/{id}/delay:
+    post:
+      tags: [Flights]
+      summary: Delay a flight by N minutes (ADMIN)
+      parameters:
+        - { $ref: '#/components/parameters/FlightId' }
+        - { name: minutes, in: query, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Delayed flight
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Flight' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/flights/admin/{id}/cancel:
+    post:
+      tags: [Flights]
+      summary: Cancel a flight (deactivates it) (ADMIN)
+      parameters:
+        - { $ref: '#/components/parameters/FlightId' }
+      responses:
+        '200':
+          description: Cancelled flight
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Flight' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  # Airport catalogue (ADMIN)
+  /api/flights/admin/airports:
+    get:
+      tags: [Flights]
+      summary: List airports (ADMIN)
+      responses:
+        '200':
+          description: Airport list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Airport' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Flights]
+      summary: Add an airport (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AirportRequest' }
+      responses:
+        '201':
+          description: Airport created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Airport' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/flights/admin/airports/{id}:
+    put:
+      tags: [Flights]
+      summary: Update an airport (ADMIN)
+      parameters:
+        - { $ref: '#/components/parameters/AirportId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AirportRequest' }
+      responses:
+        '200':
+          description: Airport updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Airport' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Flights]
+      summary: Delete an airport (ADMIN)
+      parameters:
+        - { $ref: '#/components/parameters/AirportId' }
+      responses:
+        '204': { description: Airport deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  # Aircraft catalogue (ADMIN)
+  /api/flights/admin/aircraft:
+    get:
+      tags: [Flights]
+      summary: List aircraft (ADMIN)
+      responses:
+        '200':
+          description: Aircraft list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Aircraft' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Flights]
+      summary: Add an aircraft (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AircraftRequest' }
+      responses:
+        '201':
+          description: Aircraft created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Aircraft' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/flights/admin/aircraft/{id}:
+    put:
+      tags: [Flights]
+      summary: Update an aircraft (ADMIN)
+      parameters:
+        - { $ref: '#/components/parameters/AircraftId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AircraftRequest' }
+      responses:
+        '200':
+          description: Aircraft updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Aircraft' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Flights]
+      summary: Delete an aircraft (ADMIN)
+      parameters:
+        - { $ref: '#/components/parameters/AircraftId' }
+      responses:
+        '204': { description: Aircraft deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  # ----------------------------- Pricing Service -----------------------------
+  /api/pricing/quote:
+    post:
+      tags: [Pricing]
+      summary: Calculate a dynamic quote without changing the stored base fare
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PriceRequest' }
+      responses:
+        '200':
+          description: Computed quote
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PriceQuote' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  # ----------------------------- Passenger Service -----------------------------
   /api/passengers/me:
     get:
-      summary: List the current user's travellers
-      responses: { '200': { description: Traveller profiles } }
+      tags: [Passengers]
+      summary: List the current user's traveller profiles
+      responses:
+        '200':
+          description: Traveller profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Passenger' }
+  /api/passengers/saved-travelers:
+    get:
+      tags: [Passengers]
+      summary: List the current user's saved travellers only
+      responses:
+        '200':
+          description: Saved traveller profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Passenger' }
+  /api/passengers:
+    post:
+      tags: [Passengers]
+      summary: Create a traveller profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PassengerRequest' }
+      responses:
+        '201':
+          description: Traveller created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Passenger' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/passengers/{id}:
+    put:
+      tags: [Passengers]
+      summary: Update a traveller profile (owner only)
+      parameters:
+        - { $ref: '#/components/parameters/PassengerId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PassengerRequest' }
+      responses:
+        '200':
+          description: Traveller updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Passenger' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/passengers/{id}/points:
+    post:
+      tags: [Passengers]
+      summary: Add frequent-flyer points (owner only)
+      parameters:
+        - { $ref: '#/components/parameters/PassengerId' }
+        - { name: points, in: query, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Updated traveller with new frequentFlyerPoints
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Passenger' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  # ----------------------------- Booking Service -----------------------------
   /api/bookings:
     get:
+      tags: [Bookings]
       summary: List the current user's bookings
-      responses: { '200': { description: Bookings } }
+      responses:
+        '200':
+          description: Bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Booking' }
     post:
+      tags: [Bookings]
       summary: Create a pending booking and acquire a temporary seat lock
-      responses: { '201': { description: Pending booking created }, '409': { $ref: '#/components/responses/SeatUnavailable' } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingRequest' }
+      responses:
+        '201':
+          description: Pending booking created (status PENDING_PAYMENT)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/SeatUnavailable' }
+  /api/bookings/group:
+    post:
+      tags: [Bookings]
+      summary: Create one pending booking per traveller (independent seat locks)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GroupBookingRequest' }
+      responses:
+        '201':
+          description: Bookings created
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/SeatUnavailable' }
+  /api/bookings/{id}:
+    get:
+      tags: [Bookings]
+      summary: Retrieve a single booking owned by the caller
+      parameters:
+        - { $ref: '#/components/parameters/BookingId' }
+      responses:
+        '200':
+          description: Booking
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/bookings/{id}/upgrade:
+    post:
+      tags: [Bookings]
+      summary: Change a pending booking's seat and add the price difference
+      parameters:
+        - { $ref: '#/components/parameters/BookingId' }
+        - { name: seatNumber, in: query, required: true, schema: { type: string }, description: New seat (e.g. 1A) }
+        - { name: additionalAmount, in: query, required: true, schema: { type: number, format: double, minimum: 0 } }
+      responses:
+        '200':
+          description: Upgraded booking
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /api/bookings/{id}/cancel:
     post:
-      summary: Cancel a pending booking
-      parameters: [ { $ref: '#/components/parameters/BookingId' } ]
-      responses: { '200': { description: Booking cancelled } }
+      tags: [Bookings]
+      summary: Cancel a pending booking (releases the seat lock)
+      parameters:
+        - { $ref: '#/components/parameters/BookingId' }
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  # ----------------------------- Payment Service -----------------------------
   /api/payments/initiate:
     post:
-      summary: Create a payment intent for a pending booking
-      responses: { '201': { description: Payment intent created } }
+      tags: [Payments]
+      security: []
+      summary: Create a pending payment record for a booking
+      description: Public at the gateway, but the payer is taken from X-User-Email (injected from the JWT), so a valid Bearer token should be sent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InitiateRequest' }
+      responses:
+        '201':
+          description: Payment intent created (status PENDING)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Payment' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/payments:
+    get:
+      tags: [Payments]
+      summary: List the current user's payment history
+      responses:
+        '200':
+          description: Payment history
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Payment' }
+  /api/payments/{id}/refund:
+    post:
+      tags: [Payments]
+      summary: Refund a succeeded payment
+      parameters:
+        - { $ref: '#/components/parameters/PaymentId' }
+      responses:
+        '200':
+          description: Payment refunded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Payment' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/payments/{id}/invoice:
+    get:
+      tags: [Payments]
+      summary: View a payment invoice
+      parameters:
+        - { $ref: '#/components/parameters/PaymentId' }
+      responses:
+        '200':
+          description: Invoice
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Invoice' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/payments/webhook:
     post:
+      tags: [Payments]
       security: []
       summary: Trusted provider payment callback
-      responses: { '200': { description: Payment event published }, '401': { description: Invalid webhook secret } }
+      description: Publishes payment.succeeded / payment.failed to RabbitMQ. Requires the X-Payment-Webhook-Secret header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WebhookRequest' }
+      responses:
+        '200': { description: Payment event published (empty body) }
+        '401': { description: Invalid webhook secret }
+        '404': { description: Payment not found }
+  # ----------------------------- Notification Service -----------------------------
   /api/notifications:
     get:
-      summary: List recent notification delivery logs
-      responses: { '200': { description: Delivery logs } }
+      tags: [Notifications]
+      summary: Fetch the 50 most recent delivery logs for the caller
+      responses:
+        '200':
+          description: Delivery logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Notification' }
+  /api/notifications/account/password-reset:
+    post:
+      tags: [Notifications]
+      summary: Queue a password-reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordResetEmailRequest' }
+      responses:
+        '202':
+          description: Email queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueuedMessage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/notifications/account/verification:
+    post:
+      tags: [Notifications]
+      summary: Queue an account-verification email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccountVerificationEmailRequest' }
+      responses:
+        '202':
+          description: Email queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueuedMessage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/notifications/booking/confirmation:
+    post:
+      tags: [Notifications]
+      summary: Queue a booking-confirmation email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingConfirmationEmailRequest' }
+      responses:
+        '202':
+          description: Email queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueuedMessage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/notifications/flight/update:
+    post:
+      tags: [Notifications]
+      summary: Queue a flight-schedule-update email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FlightUpdateEmailRequest' }
+      responses:
+        '202':
+          description: Email queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueuedMessage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/notifications/flight/cancellation:
+    post:
+      tags: [Notifications]
+      summary: Queue a flight-cancellation email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FlightCancellationEmailRequest' }
+      responses:
+        '202':
+          description: Email queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueuedMessage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/notifications/payment/confirmation:
+    post:
+      tags: [Notifications]
+      summary: Queue a payment-receipt email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentConfirmationEmailRequest' }
+      responses:
+        '202':
+          description: Email queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueuedMessage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  # ----------------------------- Admin Service -----------------------------
   /api/admin/dashboard:
     get:
-      summary: View operations dashboard
-      responses: { '200': { description: Dashboard }, '403': { description: Admin role required } }
+      tags: [Admin]
+      summary: View operations dashboard (ADMIN)
+      description: ADMIN only - enforced by the gateway (`X-User-Role` must be ADMIN).
+      responses:
+        '200':
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service: { type: string, example: admin-service }
+                  generatedAt: { type: string, format: date-time }
+                  auditActionCount: { type: integer }
+                  message: { type: string }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/admin/actions:
+    post:
+      tags: [Admin]
+      summary: Record an administrative action (ADMIN)
+      description: ADMIN only - enforces an audit log entry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActionRequest' }
+      responses:
+        '202':
+          description: Action recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestedBy: { type: string, format: email }
+                  action: { type: object, additionalProperties: true }
+                  status: { type: string, example: RECORDED }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  # ----------------------------- API Gateway -----------------------------
+  /fallback/flight-service:
+    get:
+      tags: [Flights]
+      security: []
+      summary: Circuit-breaker fallback for flight-service
+      responses:
+        '503':
+          description: Flight service unavailable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
   parameters:
-    BookingId: { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    BookingId: { name: id, in: path, required: true, schema: { type: integer, format: int64 }, description: Booking identifier }
+    PassengerId: { name: id, in: path, required: true, schema: { type: integer, format: int64 }, description: Passenger identifier }
+    FlightId: { name: id, in: path, required: true, schema: { type: integer, format: int64 }, description: Flight identifier }
+    PaymentId: { name: id, in: path, required: true, schema: { type: integer, format: int64 }, description: Payment identifier }
+    AirportId: { name: id, in: path, required: true, schema: { type: integer, format: int64 }, description: Airport identifier }
+    AircraftId: { name: id, in: path, required: true, schema: { type: integer, format: int64 }, description: Aircraft identifier }
+  schemas:
+    Error:
+      type: object
+      properties:
+        timestamp: { type: string, format: date-time }
+        status: { type: integer }
+        error: { type: string }
+        message: { type: string }
+        path: { type: string }
+    Role:
+      type: string
+      enum: [PASSENGER, STAFF, ADMIN]
+    RegisterRequest:
+      type: object
+      required: [firstName, lastName, email, password]
+      properties:
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string }
+    EmailRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: { type: string }
+        password: { type: string, minLength: 8 }
+    VerificationRequest:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string, description: Access token (JWT) }
+        tokenType: { type: string, example: Bearer }
+        userId: { type: integer, format: int64 }
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        refreshToken: { type: string }
+    Flight:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        flightNumber: { type: string }
+        origin: { type: string, minLength: 3, maxLength: 3 }
+        destination: { type: string, minLength: 3, maxLength: 3 }
+        departureTime: { type: string, format: date-time }
+        arrivalTime: { type: string, format: date-time }
+        fare: { type: number, format: double }
+        availableSeats: { type: integer }
+        totalSeats: { type: integer }
+        airline: { type: string }
+        aircraftCode: { type: string }
+        status: { type: string, enum: [SCHEDULED, DELAYED, CANCELLED] }
+        delayMinutes: { type: integer }
+        active: { type: boolean }
+    FlightRequest:
+      type: object
+      required: [flightNumber, origin, destination, departureTime, arrivalTime, fare, availableSeats, totalSeats, airline]
+      properties:
+        flightNumber: { type: string }
+        origin: { type: string, minLength: 3, maxLength: 3 }
+        destination: { type: string, minLength: 3, maxLength: 3 }
+        departureTime: { type: string, format: date-time }
+        arrivalTime: { type: string, format: date-time }
+        fare: { type: number, format: double, minimum: 0 }
+        availableSeats: { type: integer, minimum: 0 }
+        totalSeats: { type: integer, minimum: 1 }
+        airline: { type: string }
+        aircraftCode: { type: string }
+    Airport:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        code: { type: string, minLength: 3, maxLength: 3 }
+        name: { type: string }
+        city: { type: string }
+        country: { type: string }
+    AirportRequest:
+      type: object
+      required: [code, name, city, country]
+      properties:
+        code: { type: string, minLength: 3, maxLength: 3 }
+        name: { type: string }
+        city: { type: string }
+        country: { type: string }
+    Aircraft:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        code: { type: string }
+        model: { type: string }
+        seatCapacity: { type: integer, minimum: 1 }
+    AircraftRequest:
+      type: object
+      required: [code, model, seatCapacity]
+      properties:
+        code: { type: string }
+        model: { type: string }
+        seatCapacity: { type: integer, minimum: 1 }
+    PriceRequest:
+      type: object
+      required: [flightId, baseFare, departureDate, cabin]
+      properties:
+        flightId: { type: integer, format: int64, minimum: 1 }
+        baseFare: { type: number, format: double, exclusiveMinimum: 0 }
+        departureDate: { type: string, format: date }
+        availableSeats: { type: integer, minimum: 0 }
+        totalSeats: { type: integer, minimum: 1 }
+        cabin: { type: string, enum: [ECONOMY, PREMIUM_ECONOMY, BUSINESS, FIRST] }
+        promoCode: { type: string }
+        frequentFlyerPoints: { type: integer, minimum: 0 }
+    PriceQuote:
+      type: object
+      properties:
+        flightId: { type: integer, format: int64 }
+        cabin: { type: string }
+        baseFare: { type: number, format: double }
+        multiplier: { type: number, format: double }
+        promoDiscount: { type: number, format: double }
+        frequentFlyerPointsDiscount: { type: number, format: double }
+        total: { type: number, format: double }
+        appliedRules:
+          type: array
+          items: { type: string }
+    Passenger:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        ownerEmail: { type: string, format: email }
+        firstName: { type: string }
+        lastName: { type: string }
+        dateOfBirth: { type: string, format: date }
+        phone: { type: string }
+        documentNumber: { type: string }
+        passportNationality: { type: string }
+        passportExpiryDate: { type: string, format: date }
+        frequentFlyerPoints: { type: integer }
+        savedTraveler: { type: boolean }
+    PassengerRequest:
+      type: object
+      required: [firstName, lastName, dateOfBirth]
+      properties:
+        firstName: { type: string }
+        lastName: { type: string }
+        dateOfBirth: { type: string, format: date }
+        phone: { type: string }
+        documentNumber: { type: string }
+        passportNationality: { type: string }
+        passportExpiryDate: { type: string, format: date }
+        savedTraveler: { type: boolean, default: true }
+    BookingStatus:
+      type: string
+      enum: [PENDING_PAYMENT, CONFIRMED, CANCELLED, EXPIRED]
+    Booking:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        pnr: { type: string, description: Six-character reservation code }
+        ownerEmail: { type: string, format: email }
+        flightId: { type: integer, format: int64 }
+        passengerId: { type: integer, format: int64 }
+        seatNumber: { type: string }
+        amount: { type: number, format: double }
+        status: { $ref: '#/components/schemas/BookingStatus' }
+        createdAt: { type: string, format: date-time }
+    BookingRequest:
+      type: object
+      required: [flightId, passengerId, seatNumber, amount]
+      properties:
+        flightId: { type: integer, format: int64, minimum: 1 }
+        passengerId: { type: integer, format: int64, minimum: 1 }
+        seatNumber: { type: string, pattern: '^[0-9]{1,3}[A-Za-z]$' }
+        amount: { type: number, format: double, exclusiveMinimum: 0 }
+    TravelerSeat:
+      type: object
+      required: [passengerId, seatNumber, amount]
+      properties:
+        passengerId: { type: integer, format: int64, minimum: 1 }
+        seatNumber: { type: string, pattern: '^[0-9]{1,3}[A-Za-z]$' }
+        amount: { type: number, format: double, exclusiveMinimum: 0 }
+    GroupBookingRequest:
+      type: object
+      required: [flightId, travelers]
+      properties:
+        flightId: { type: integer, format: int64, minimum: 1 }
+        travelers:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/TravelerSeat' }
+    PaymentStatus:
+      type: string
+      enum: [PENDING, SUCCEEDED, FAILED, REFUNDED]
+    Payment:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        providerReference: { type: string, example: pay_9f2c1a4b8c }
+        bookingId: { type: integer, format: int64 }
+        ownerEmail: { type: string, format: email }
+        amount: { type: number, format: double }
+        status: { $ref: '#/components/schemas/PaymentStatus' }
+        createdAt: { type: string, format: date-time }
+    InitiateRequest:
+      type: object
+      required: [bookingId, amount]
+      properties:
+        bookingId: { type: integer, format: int64, minimum: 1 }
+        amount: { type: number, format: double, exclusiveMinimum: 0 }
+    WebhookRequest:
+      type: object
+      required: [providerReference, succeeded]
+      properties:
+        providerReference: { type: string }
+        succeeded: { type: boolean }
+    Invoice:
+      type: object
+      properties:
+        invoiceNumber: { type: string, example: INV-12 }
+        paymentReference: { type: string }
+        bookingId: { type: integer, format: int64 }
+        amount: { type: number, format: double }
+        status: { $ref: '#/components/schemas/PaymentStatus' }
+        issuedAt: { type: string, format: date-time }
+    Notification:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        eventType: { type: string }
+        recipient: { type: string, format: email }
+        payload: { type: string }
+        deliveryStatus: { type: string }
+        deliveryError: { type: string }
+        createdAt: { type: string, format: date-time }
+    QueuedMessage:
+      type: object
+      properties:
+        message: { type: string, example: Booking confirmation email queued for dispatch }
+    PasswordResetEmailRequest:
+      type: object
+      required: [recipientEmail, resetUrl]
+      properties:
+        recipientEmail: { type: string, format: email }
+        resetUrl: { type: string, format: uri }
+        userName: { type: string }
+        expireInMinutes: { type: integer }
+    AccountVerificationEmailRequest:
+      type: object
+      required: [recipientEmail, verificationUrl]
+      properties:
+        recipientEmail: { type: string, format: email }
+        verificationUrl: { type: string, format: uri }
+        userName: { type: string }
+    BookingConfirmationEmailRequest:
+      type: object
+      required: [recipientEmail, bookingId]
+      properties:
+        recipientEmail: { type: string, format: email }
+        bookingId: { type: integer, format: int64, minimum: 1 }
+        bookingReference: { type: string }
+        flightNumber: { type: string }
+        origin: { type: string }
+        destination: { type: string }
+        departureTime: { type: string }
+        arrivalTime: { type: string }
+        totalAmount: { type: number, format: double }
+        passengerNames:
+          type: array
+          items: { type: string }
+    FlightUpdateEmailRequest:
+      type: object
+      required: [recipientEmail, flightNumber]
+      properties:
+        recipientEmail: { type: string, format: email }
+        flightNumber: { type: string }
+        origin: { type: string }
+        destination: { type: string }
+        scheduledDeparture: { type: string }
+        newDeparture: { type: string }
+        gate: { type: string }
+        statusMessage: { type: string }
+    FlightCancellationEmailRequest:
+      type: object
+      required: [recipientEmail, flightNumber]
+      properties:
+        recipientEmail: { type: string, format: email }
+        flightNumber: { type: string }
+        origin: { type: string }
+        destination: { type: string }
+        departureDate: { type: string }
+        reason: { type: string }
+        refundPolicyUrl: { type: string, format: uri }
+    PaymentConfirmationEmailRequest:
+      type: object
+      required: [recipientEmail, bookingId, amount]
+      properties:
+        recipientEmail: { type: string, format: email }
+        bookingId: { type: integer, format: int64, minimum: 1 }
+        paymentId: { type: integer, format: int64 }
+        providerReference: { type: string }
+        amount: { type: number, format: double, exclusiveMinimum: 0 }
+        paymentMethod: { type: string }
+    ActionRequest:
+      type: object
+      description: Free-form administrative action payload
+      additionalProperties: true
   responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: The authenticated user lacks the ADMIN role for this route
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Conflict (e.g. seat already locked, or operation not allowed in the current status)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
     SeatUnavailable:
-      description: The requested seat is locked by another booking attempt.
+      description: The requested seat is locked by another booking attempt
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }

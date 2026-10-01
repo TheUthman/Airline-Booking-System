@@ -29,6 +29,19 @@ public class BookingController {
         return repository.findByOwnerEmailOrderByCreatedAtDesc(email);
     }
 
+    @GetMapping("/pnr/{pnr}")
+    Booking byPnr(@PathVariable String pnr) {
+        return repository
+                .findByPnrIgnoreCase(pnr.trim())
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+    }
+
+    @GetMapping("/search")
+    Booking search(@RequestParam String pnr, @RequestParam(required = false) String lastName) {
+        return byPnr(pnr);
+    }
+
     @GetMapping("/{id}")
     Booking one(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
         return repository

@@ -14,9 +14,21 @@ import java.util.List;
 @RequestMapping("/api/flights")
 public class FlightController {
     private final FlightRepository flights;
+    private final AirportRepository airports;
 
-    FlightController(FlightRepository flights) {
+    FlightController(FlightRepository flights, AirportRepository airports) {
         this.flights = flights;
+        this.airports = airports;
+    }
+
+    @GetMapping
+    public List<Flight> all() {
+        return flights.findAll();
+    }
+
+    @GetMapping("/airports")
+    public List<Airport> publicAirports() {
+        return airports.findAll();
     }
 
     @GetMapping("/search")

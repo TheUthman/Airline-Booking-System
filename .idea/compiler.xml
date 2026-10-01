@@ -12,11 +12,11 @@
         <module name="booking-service" />
         <module name="api-gateway" />
         <module name="passenger-service" />
-        <module name="service-registry" />
         <module name="admin-service" />
         <module name="flight-service" />
         <module name="notification-service" />
         <module name="pricing-service" />
+        <module name="service-registry" />
       </profile>
     </annotationProcessing>
   </component>

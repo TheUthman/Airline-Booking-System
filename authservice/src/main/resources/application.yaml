@@ -43,3 +43,8 @@ management:
     web:
       exposure:
         include: health,info
+
+app:
+  notification-service-url: ${NOTIFICATION_SERVICE_URL:http://localhost:8087}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+

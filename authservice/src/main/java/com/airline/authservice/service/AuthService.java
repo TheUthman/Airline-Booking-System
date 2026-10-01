@@ -11,6 +11,7 @@ import com.airline.authservice.repository.RefreshTokenRepository;
 import com.airline.authservice.repository.UserRepository;
 import com.airline.authservice.security.JwtService;
 
+import com.airline.authservice.client.NotificationClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final NotificationClient notificationClient;
     private final long refreshExpiration;
 
     public AuthService(
@@ -34,11 +36,13 @@ public class AuthService {
             RefreshTokenRepository refreshTokenRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
+            NotificationClient notificationClient,
             @Value("${jwt.refresh-expiration}") long refreshExpiration) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.notificationClient = notificationClient;
         this.refreshExpiration = refreshExpiration;
     }
 
@@ -58,6 +62,12 @@ public class AuthService {
         user.setRole(Role.PASSENGER);
 
         User savedUser = userRepository.save(user);
+
+        // Generate email verification token and trigger email dispatch
+        String verificationToken = UUID.randomUUID().toString().replace("-", "");
+        savedUser.setEmailVerificationToken(verificationToken);
+        savedUser = userRepository.save(savedUser);
+        notificationClient.sendEmailVerification(savedUser.getEmail(), savedUser.getFirstName() + " " + savedUser.getLastName(), verificationToken);
 
         String accessToken = jwtService.generateToken(savedUser);
 
@@ -175,6 +185,18 @@ public class AuthService {
         return userRepository.save(user);
     }
 
+    public java.util.List<java.util.Map<String, Object>> listUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> java.util.Map.<String, Object>of(
+                        "id", user.getId(),
+                        "email", user.getEmail(),
+                        "firstName", user.getFirstName(),
+                        "lastName", user.getLastName(),
+                        "role", user.getRole().name(),
+                        "name", user.getFirstName() + " " + user.getLastName()))
+                .toList();
+    }
+
     /** Creates a one-time token. Delivery is delegated to notification-service by the caller. */
     public String requestPasswordReset(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(
@@ -183,6 +205,9 @@ public class AuthService {
         user.setPasswordResetToken(token);
         user.setPasswordResetExpiresAt(LocalDateTime.now().plusMinutes(30));
         userRepository.save(user);
+
+        String fullName = (user.getFirstName() != null ? user.getFirstName() : "") + " " + (user.getLastName() != null ? user.getLastName() : "");
+        notificationClient.sendPasswordReset(user.getEmail(), fullName.trim(), token);
         return token;
     }
 
@@ -204,6 +229,9 @@ public class AuthService {
         String token = UUID.randomUUID().toString().replace("-", "");
         user.setEmailVerificationToken(token);
         userRepository.save(user);
+
+        String fullName = (user.getFirstName() != null ? user.getFirstName() : "") + " " + (user.getLastName() != null ? user.getLastName() : "");
+        notificationClient.sendEmailVerification(user.getEmail(), fullName.trim(), token);
         return token;
     }
 

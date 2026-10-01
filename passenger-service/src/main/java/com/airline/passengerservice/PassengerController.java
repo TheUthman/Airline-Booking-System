@@ -24,9 +24,25 @@ public class PassengerController {
         return repository.findByOwnerEmail(email);
     }
 
+    @GetMapping
+    List<Passenger> list(@RequestHeader("X-User-Email") String email) {
+        return mine(email);
+    }
+
     @GetMapping("/saved-travelers")
     List<Passenger> savedTravelers(@RequestHeader("X-User-Email") String email) {
         return repository.findByOwnerEmail(email).stream().filter(Passenger::isSavedTraveler).toList();
+    }
+
+    @GetMapping("/{id}")
+    Passenger one(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
+        return owned(id, email);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void delete(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
+        repository.delete(owned(id, email));
     }
 
     @PostMapping("/{id}/points")

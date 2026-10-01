@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -50,6 +51,11 @@ public class AuthController {
         AuthResponse response = authService.refreshToken(request);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/users")
+    public List<Map<String, Object>> users() {
+        return authService.listUsers();
     }
 
     @PostMapping("/promote/{userId}")

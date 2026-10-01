@@ -85,14 +85,19 @@ public class SecurityConfig {
                                                                 .requestMatchers(
                                                                                 "/api/flights/admin/**",
                                                                                 "/api/admin/**",
-                                                                                "/api/auth/promote/**")
+                                                                                "/api/auth/promote/**",
+                                                                                "/api/auth/users")
                                                                 .hasRole("ADMIN")
 
-                                                                // Flight search must be available before a user signs
-                                                                // in.
+                                                                // Flight search / catalogue and PNR lookup before sign-in.
                                                                 .requestMatchers(
                                                                                 org.springframework.http.HttpMethod.GET,
                                                                                 "/api/flights/**")
+                                                                .permitAll()
+                                                                .requestMatchers(
+                                                                                org.springframework.http.HttpMethod.GET,
+                                                                                "/api/bookings/pnr/**",
+                                                                                "/api/bookings/search")
                                                                 .permitAll()
 
                                                                 // Eureka / actuator
