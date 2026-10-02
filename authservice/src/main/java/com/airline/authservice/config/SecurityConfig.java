@@ -37,7 +37,11 @@ public class SecurityConfig {
                                 auth.requestMatchers(
                                                 "/api/auth/register",
                                                 "/api/auth/login",
-                                                "/api/auth/refresh")
+                                                "/api/auth/refresh",
+                                                "/api/auth/forgot-password",
+                                                "/api/auth/reset-password",
+                                                "/api/auth/verification",
+                                                "/api/auth/verification/confirm")
                                         .permitAll()
                                         .requestMatchers("/api/auth/promote/**")
                                         .hasRole("ADMIN")
