@@ -51,6 +51,7 @@ public class AuthService {
         this.refreshExpiration = refreshExpiration;
     }
 
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
@@ -89,6 +90,7 @@ public class AuthService {
                 refreshToken);
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository
