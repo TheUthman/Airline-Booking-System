@@ -5,6 +5,9 @@ spring:
   jpa: { hibernate: { ddl-auto: update }, open-in-view: false }
   rabbitmq: { host: "${RABBITMQ_HOST:localhost}", port: "${RABBITMQ_PORT:5672}", username: "${RABBITMQ_USERNAME:guest}", password: "${RABBITMQ_PASSWORD:guest}" }
 server: { port: 8086 }
-payment: { webhook-secret: "${PAYMENT_WEBHOOK_SECRET:development-webhook-secret}" }
+payment:
+  webhook-secret: "${PAYMENT_WEBHOOK_SECRET:development-webhook-secret}"
+  simulation:
+    enabled: "${PAYMENT_SIMULATION_ENABLED:false}"
 eureka: { client: { service-url: { defaultZone: "${EUREKA_URL:http://localhost:8761/eureka/}" } } }
 management: { endpoints: { web: { exposure: { include: health,info } } } }

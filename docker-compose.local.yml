@@ -41,6 +41,7 @@ services:
   payment-service:
     environment:
       JAVA_TOOL_OPTIONS: "-Xms32m -Xmx192m -XX:+UseSerialGC"
+      PAYMENT_SIMULATION_ENABLED: "true"
 
   notification-service:
     environment:

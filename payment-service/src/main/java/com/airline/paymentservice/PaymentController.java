@@ -27,16 +27,19 @@ public class PaymentController {
     private final ObjectMapper mapper;
 
     private final String webhookSecret;
+    private final boolean simulationEnabled;
 
     PaymentController(
             PaymentRepository repository,
             RabbitTemplate rabbit,
             ObjectMapper mapper,
-            @Value("${payment.webhook-secret}") String webhookSecret) {
+            @Value("${payment.webhook-secret}") String webhookSecret,
+            @Value("${payment.simulation.enabled:false}") boolean simulationEnabled) {
         this.repository = repository;
         this.rabbit = rabbit;
         this.mapper = mapper;
         this.webhookSecret = webhookSecret;
+        this.simulationEnabled = simulationEnabled;
     }
 
     @PostMapping("/initiate")
@@ -50,7 +53,12 @@ public class PaymentController {
         p.setProviderReference("pay_" + UUID.randomUUID().toString().replace("-", ""));
         p.setStatus(PaymentStatus.PENDING);
         p.setCreatedAt(LocalDateTime.now());
-        return repository.save(p);
+        p = repository.save(p);
+        if (simulationEnabled) {
+            p.setSimulated(true);
+            completePayment(p, true);
+        }
+        return p;
     }
 
     @GetMapping
@@ -119,23 +127,34 @@ public class PaymentController {
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "Payment not found"));
         if (p.getStatus() != PaymentStatus.PENDING) return ResponseEntity.ok().build();
-        p.setStatus(r.succeeded() ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED);
-        repository.save(p);
-        String type = r.succeeded() ? "payment.succeeded" : "payment.failed";
-        rabbit.convertAndSend(
-                "airline.events",
-                type,
-                mapper.writeValueAsString(
-                        Map.of(
-                                "type",
-                                type,
-                                "bookingId",
-                                p.getBookingId(),
-                                "paymentId",
-                                p.getId(),
-                                "recipientEmail",
-                                p.getOwnerEmail())));
+        completePayment(p, r.succeeded());
         return ResponseEntity.ok().build();
+    }
+
+    private void completePayment(Payment payment, boolean succeeded) {
+        payment.setStatus(succeeded ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED);
+        repository.save(payment);
+        String type = succeeded ? "payment.succeeded" : "payment.failed";
+        try {
+            rabbit.convertAndSend(
+                    "airline.events",
+                    type,
+                    mapper.writeValueAsString(
+                            Map.of(
+                                    "type",
+                                    type,
+                                    "bookingId",
+                                    payment.getBookingId(),
+                                    "paymentId",
+                                    payment.getId(),
+                                    "recipientEmail",
+                                    payment.getOwnerEmail())));
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Payment status was recorded but the booking update event could not be published",
+                    e);
+        }
     }
 
     record InitiateRequest(

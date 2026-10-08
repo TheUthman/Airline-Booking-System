@@ -31,6 +31,9 @@ public class Payment {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Transient
+    private boolean simulated;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -86,5 +89,13 @@ public class Payment {
 
     public void setCreatedAt(LocalDateTime v) {
         createdAt = v;
+    }
+
+    public boolean isSimulated() {
+        return simulated;
+    }
+
+    public void setSimulated(boolean simulated) {
+        this.simulated = simulated;
     }
 }
