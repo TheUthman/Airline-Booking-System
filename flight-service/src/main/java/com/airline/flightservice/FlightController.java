@@ -40,16 +40,16 @@ public class FlightController {
             @RequestParam(defaultValue = "ECONOMY")
                     @Pattern(regexp = "(?i)ECONOMY|BUSINESS") String cabin,
             @RequestParam(required = false) String airline,
-            @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) Integer maxDurationMinutes) {
+            @RequestParam(required = false) @DecimalMin("0.0") BigDecimal maxPrice,
+            @RequestParam(required = false) @Min(0) Integer maxDurationMinutes) {
         // All filters are pushed into the DB query — no in-memory stream filtering
         return flights.search(
                 origin, destination,
                 date.atStartOfDay(), date.plusDays(1).atStartOfDay(),
                 passengers, cabin,
-                (airline == null || airline.isBlank()) ? null : airline,
-                maxPrice,
-                maxDurationMinutes);
+                (airline == null || airline.isBlank()) ? "" : airline,
+                maxPrice == null ? BigDecimal.valueOf(-1) : maxPrice,
+                maxDurationMinutes == null ? -1 : maxDurationMinutes);
     }
 
     @GetMapping("/{id}")

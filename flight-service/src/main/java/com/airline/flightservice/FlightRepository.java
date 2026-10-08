@@ -12,8 +12,8 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
 
     /**
      * Finds active flights for the given route and date window, with optional server-side
-     * filters for airline, max fare, and max duration in minutes.
-     * Null filter values mean "no restriction".
+     * filters for airline, max fare, and max duration in minutes. Empty airline and negative
+     * numeric filter values mean "no restriction" so nullable JDBC parameters are avoided.
      */
     @Query("""
             SELECT f FROM Flight f
@@ -24,10 +24,10 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
               AND f.active       = true
               AND f.availableSeats >= :passengers
               AND (UPPER(:cabin) <> 'BUSINESS' OR f.businessFare > 0)
-              AND (:airline IS NULL OR UPPER(f.airline) = UPPER(:airline))
-              AND (:maxPrice IS NULL OR
+              AND (:airline = '' OR UPPER(f.airline) = UPPER(:airline))
+              AND (:maxPrice < 0 OR
                    CASE WHEN UPPER(:cabin) = 'BUSINESS' THEN f.businessFare ELSE f.fare END <= :maxPrice)
-              AND (:maxDurationMinutes IS NULL
+              AND (:maxDurationMinutes < 0
                    OR (FUNCTION('TIMESTAMPDIFF', MINUTE, f.departureTime, f.arrivalTime)) <= :maxDurationMinutes)
             ORDER BY f.departureTime
             """)

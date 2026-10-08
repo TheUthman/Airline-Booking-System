@@ -30,16 +30,30 @@ class FlightRepositoryTest {
         LocalDateTime end = departure.toLocalDate().plusDays(1).atStartOfDay();
 
         assertThat(flights.search("LOS", "ABV", start, end, 1, "ECONOMY",
-                null, new BigDecimal("150.00"), null))
+                "", new BigDecimal("150.00"), -1))
                 .extracting(Flight::getFlightNumber)
                 .containsExactlyInAnyOrder("TA101", "TA102");
         assertThat(flights.search("LOS", "ABV", start, end, 1, "BUSINESS",
-                null, new BigDecimal("600.00"), null))
+                "", new BigDecimal("600.00"), -1))
                 .extracting(Flight::getFlightNumber)
                 .containsExactly("TA101");
         assertThat(flights.search("LOS", "ABV", start, end, 1, "BUSINESS",
-                null, new BigDecimal("400.00"), null))
+                "", new BigDecimal("400.00"), -1))
                 .isEmpty();
+    }
+
+    @Test
+    void searchesWithoutOptionalFiltersUsingNonNullSentinels() {
+        LocalDateTime departure = LocalDate.now().plusDays(10).atTime(8, 0);
+        flights.save(flight("TA103", departure, "100.00", "500.00"));
+
+        assertThat(flights.search(
+                "LOS", "ABV",
+                departure.toLocalDate().atStartOfDay(),
+                departure.toLocalDate().plusDays(1).atStartOfDay(),
+                1, "ECONOMY", "", BigDecimal.valueOf(-1), -1))
+                .extracting(Flight::getFlightNumber)
+                .containsExactly("TA103");
     }
 
     private Flight flight(
