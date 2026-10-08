@@ -24,6 +24,7 @@ services:
   payment-service:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - PAYMENT_SIMULATION_ENABLED=true
 
   notification-service:
     environment:
@@ -32,4 +33,3 @@ services:
   admin-service:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-
