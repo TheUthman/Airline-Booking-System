@@ -527,6 +527,37 @@ paths:
                 items: { $ref: '#/components/schemas/Booking' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '409': { $ref: '#/components/responses/SeatUnavailable' }
+  /api/bookings/staff/lookup:
+    get:
+      tags: [Bookings]
+      summary: Staff-only read-only booking lookup by PNR
+      description: >
+        Requires a STAFF or ADMIN JWT role. Returns booking and flight reference
+        details without exposing the booking owner's email or allowing changes.
+      parameters:
+        - name: pnr
+          in: query
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 10 }
+      responses:
+        '200':
+          description: Booking operations details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer, format: int64 }
+                  pnr: { type: string }
+                  flightId: { type: integer, format: int64 }
+                  seatNumber: { type: string }
+                  cabinClass: { type: string, enum: [ECONOMY, BUSINESS] }
+                  amount: { type: number }
+                  status: { type: string }
+                  createdAt: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/bookings/{id}:
     get:
       tags: [Bookings]

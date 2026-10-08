@@ -42,6 +42,30 @@ public class BookingController {
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
     }
 
+    @GetMapping("/staff/lookup")
+    StaffBookingView staffLookup(
+            @RequestParam @NotBlank String pnr,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if (!"STAFF".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Staff access is required");
+        }
+
+        Booking booking = repository
+                .findByPnrIgnoreCase(pnr.trim())
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+
+        return new StaffBookingView(
+                booking.getId(),
+                booking.getPnr(),
+                booking.getFlightId(),
+                booking.getSeatNumber(),
+                booking.getCabinClass(),
+                booking.getAmount(),
+                booking.getStatus(),
+                booking.getCreatedAt());
+    }
+
     // PNR lookup — optionally cross-checks lastName against the booking owner email as a guard
     @GetMapping("/search")
     Booking search(@RequestParam String pnr, @RequestParam(required = false) String lastName) {
@@ -182,6 +206,16 @@ public class BookingController {
         }
     }
     record GroupBookingRequest(@NotNull @Positive Long flightId, @NotEmpty List<@Valid TravelerSeat> travelers) {}
+
+    public record StaffBookingView(
+            Long id,
+            String pnr,
+            Long flightId,
+            String seatNumber,
+            String cabinClass,
+            BigDecimal amount,
+            BookingStatus status,
+            LocalDateTime createdAt) {}
 
     private String normalizeCabinClass(String cabinClass) {
         String normalized = cabinClass == null || cabinClass.isBlank()

@@ -90,6 +90,10 @@ public class SecurityConfig {
                                                                                 "/api/auth/users/**",
                                                                                 "/api/auth/users")
                                                                 .hasRole("ADMIN")
+                                                                .requestMatchers(
+                                                                                org.springframework.http.HttpMethod.GET,
+                                                                                "/api/bookings/staff/lookup")
+                                                                .hasAnyRole("STAFF", "ADMIN")
 
                                                                 // Flight search / catalogue and PNR lookup before sign-in.
                                                                 .requestMatchers(
