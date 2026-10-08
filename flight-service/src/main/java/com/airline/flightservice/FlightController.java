@@ -37,18 +37,19 @@ public class FlightController {
             @RequestParam @Pattern(regexp = "[A-Za-z]{3}") String destination,
             @RequestParam LocalDate date,
             @RequestParam(defaultValue = "1") @Min(1) int passengers,
+            @RequestParam(defaultValue = "ECONOMY")
+                    @Pattern(regexp = "(?i)ECONOMY|BUSINESS") String cabin,
             @RequestParam(required = false) String airline,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Integer maxDurationMinutes) {
-        return flights
-                .findByOriginIgnoreCaseAndDestinationIgnoreCaseAndDepartureTimeBetweenAndActiveTrue(
-                        origin, destination, date.atStartOfDay(), date.plusDays(1).atStartOfDay())
-                .stream()
-                .filter(f -> f.getAvailableSeats() >= passengers)
-                .filter(f -> airline == null || airline.isBlank() || airline.equalsIgnoreCase(f.getAirline()))
-                .filter(f -> maxPrice == null || f.getFare().compareTo(maxPrice) <= 0)
-                .filter(f -> maxDurationMinutes == null || Duration.between(f.getDepartureTime(), f.getArrivalTime()).toMinutes() <= maxDurationMinutes)
-                .toList();
+        // All filters are pushed into the DB query — no in-memory stream filtering
+        return flights.search(
+                origin, destination,
+                date.atStartOfDay(), date.plusDays(1).atStartOfDay(),
+                passengers, cabin,
+                (airline == null || airline.isBlank()) ? null : airline,
+                maxPrice,
+                maxDurationMinutes);
     }
 
     @GetMapping("/{id}")
@@ -77,7 +78,7 @@ public class FlightController {
         f.setDelayMinutes((f.getDelayMinutes() == null ? 0 : f.getDelayMinutes()) + minutes);
         f.setDepartureTime(f.getDepartureTime().plusMinutes(minutes));
         f.setArrivalTime(f.getArrivalTime().plusMinutes(minutes));
-        f.setStatus("DELAYED");
+        f.setStatus(FlightStatus.DELAYED);
         return flights.save(f);
     }
 
@@ -85,7 +86,7 @@ public class FlightController {
     public Flight cancel(@PathVariable Long id) {
         Flight f = one(id);
         f.setActive(false);
-        f.setStatus("CANCELLED");
+        f.setStatus(FlightStatus.CANCELLED);
         return flights.save(f);
     }
 
@@ -96,6 +97,7 @@ public class FlightController {
         f.setDepartureTime(r.departureTime());
         f.setArrivalTime(r.arrivalTime());
         f.setFare(r.fare());
+        f.setBusinessFare(r.businessFare());
         f.setAvailableSeats(r.availableSeats());
         f.setTotalSeats(r.totalSeats());
         f.setAirline(r.airline());
@@ -109,6 +111,7 @@ public class FlightController {
             @NotNull LocalDateTime departureTime,
             @NotNull LocalDateTime arrivalTime,
             @NotNull @PositiveOrZero BigDecimal fare,
+            @PositiveOrZero BigDecimal businessFare,
             @Min(0) int availableSeats,
             @Min(1) int totalSeats,
             @NotBlank String airline,

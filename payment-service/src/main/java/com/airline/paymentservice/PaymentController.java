@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -52,7 +54,12 @@ public class PaymentController {
     }
 
     @GetMapping
-    List<Payment> history(@RequestHeader("X-User-Email") String email) {
+    List<Payment> history(
+            @RequestHeader("X-User-Email") String email,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return repository.findAll();
+        }
         return repository.findByOwnerEmailOrderByCreatedAtDesc(email);
     }
 
@@ -64,7 +71,26 @@ public class PaymentController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Only successful payments can be refunded");
         }
         payment.setStatus(PaymentStatus.REFUNDED);
-        return repository.save(payment);
+        repository.save(payment);
+        // Notify downstream services (e.g. booking-service) so the booking can be cancelled
+        try {
+            String type = "payment.refunded";
+            rabbit.convertAndSend(
+                    "airline.events",
+                    type,
+                    mapper.writeValueAsString(
+                            Map.of(
+                                    "type", type,
+                                    "bookingId", payment.getBookingId(),
+                                    "paymentId", payment.getId(),
+                                    "recipientEmail", payment.getOwnerEmail())));
+        } catch (Exception e) {
+            // Event publishing failure should not roll back the already-saved refund;
+            // a dead-letter or retry mechanism will handle redelivery.
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Refund recorded but event notification failed: " + e.getMessage());
+        }
+        return payment;
     }
 
     @GetMapping("/{id}/invoice")
@@ -81,7 +107,9 @@ public class PaymentController {
             @RequestHeader("X-Payment-Webhook-Secret") String secret,
             @Valid @RequestBody WebhookRequest r)
             throws Exception {
-        if (!webhookSecret.equals(secret))
+        if (!MessageDigest.isEqual(
+                webhookSecret.getBytes(StandardCharsets.UTF_8),
+                secret.getBytes(StandardCharsets.UTF_8)))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         Payment p =
                 repository

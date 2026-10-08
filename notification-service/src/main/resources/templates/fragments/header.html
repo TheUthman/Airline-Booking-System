@@ -1,12 +1,41 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8" />
-</head>
+<head><meta charset="UTF-8" /></head>
 <body>
-    <div th:fragment="email-header(title)" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 24px; text-align: center; border-radius: 8px 8px 0 0; color: #ffffff;">
-        <h1 style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">✈️ SkyWings Airlines</h1>
-        <p th:if="${title}" th:text="${title}" style="margin: 8px 0 0 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; opacity: 0.9;"></p>
+    <div th:fragment="email-header(title)"
+         style="background-color: #e87516; padding: 0; text-align: center; border-radius: 12px 12px 0 0; overflow: hidden;">
+
+        <!-- Brand Top Bar -->
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+                <td style="padding: 24px 20px 20px 20px; text-align: center;">
+                    <!-- Circular Logo Emblem -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto 10px auto;">
+                        <tr>
+                            <td style="width: 44px; height: 44px; background-color: #ffffff; border-radius: 22px; text-align: center; vertical-align: middle; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
+                                    <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2h0A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="#e87516"/>
+                                </svg>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Brand Wordmark -->
+                    <div style="font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 22px; line-height: 24px; font-weight: 800; letter-spacing: -0.5px;">
+                        <span style="color: #ffffff;">Tiger</span><span style="color: #ffb52e;">Airlines</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Optional Context Title Band -->
+        <div th:if="${title}" style="background-color: rgba(0, 0, 0, 0.08); padding: 9px 20px; border-top: 1px solid rgba(255, 255, 255, 0.15);">
+            <p th:text="${title}"
+               style="margin: 0; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                      font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #ffffff;">
+                Notification
+            </p>
+        </div>
     </div>
 </body>
 </html>

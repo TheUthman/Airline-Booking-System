@@ -25,7 +25,12 @@ public class BookingController {
     }
 
     @GetMapping
-    List<Booking> mine(@RequestHeader("X-User-Email") String email) {
+    List<Booking> mine(
+            @RequestHeader("X-User-Email") String email,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return repository.findAll();
+        }
         return repository.findByOwnerEmailOrderByCreatedAtDesc(email);
     }
 
@@ -37,9 +42,16 @@ public class BookingController {
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
     }
 
+    // PNR lookup — optionally cross-checks lastName against the booking owner email as a guard
     @GetMapping("/search")
     Booking search(@RequestParam String pnr, @RequestParam(required = false) String lastName) {
-        return byPnr(pnr);
+        Booking booking = byPnr(pnr);
+        if (lastName != null && !lastName.isBlank()
+                && !booking.getOwnerEmail().toLowerCase().contains(lastName.toLowerCase())) {
+            // Don't reveal that the PNR exists for a different passenger
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found");
+        }
+        return booking;
     }
 
     @GetMapping("/{id}")
@@ -57,6 +69,7 @@ public class BookingController {
     Booking create(
             @RequestHeader("X-User-Email") String email,
             @Valid @RequestBody BookingRequest request) {
+        String cabinClass = normalizeCabinClass(request.cabinClass());
         String key = "seat-lock:" + request.flightId() + ":" + request.seatNumber().toUpperCase();
         boolean acquired;
         try {
@@ -77,9 +90,10 @@ public class BookingController {
         b.setFlightId(request.flightId());
         b.setPassengerId(request.passengerId());
         b.setSeatNumber(request.seatNumber().toUpperCase());
+        b.setCabinClass(cabinClass);
         b.setAmount(request.amount());
         b.setStatus(BookingStatus.PENDING_PAYMENT);
-        b.setCreatedAt(LocalDateTime.now());
+        // createdAt set automatically by @PrePersist
         return repository.save(b);
     }
 
@@ -91,22 +105,31 @@ public class BookingController {
         if (request.travelers().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one traveller is required");
         }
+        List<String> acquiredLocks = new ArrayList<>();
         List<Booking> result = new ArrayList<>();
-        for (TravelerSeat traveler : request.travelers()) {
-            String key = "seat-lock:" + request.flightId() + ":" + traveler.seatNumber().toUpperCase();
-            if (!Boolean.TRUE.equals(redis.opsForValue().setIfAbsent(key, email, Duration.ofMinutes(10)))) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "A requested seat is currently unavailable");
+        try {
+            for (TravelerSeat traveler : request.travelers()) {
+                String cabinClass = normalizeCabinClass(traveler.cabinClass());
+                String key = "seat-lock:" + request.flightId() + ":" + traveler.seatNumber().toUpperCase();
+                if (!Boolean.TRUE.equals(redis.opsForValue().setIfAbsent(key, email, Duration.ofMinutes(10)))) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "A requested seat is currently unavailable");
+                }
+                acquiredLocks.add(key);
+                Booking booking = new Booking();
+                booking.setPnr(UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase());
+                booking.setOwnerEmail(email);
+                booking.setFlightId(request.flightId());
+                booking.setPassengerId(traveler.passengerId());
+                booking.setSeatNumber(traveler.seatNumber().toUpperCase());
+                booking.setCabinClass(cabinClass);
+                booking.setAmount(traveler.amount());
+                booking.setStatus(BookingStatus.PENDING_PAYMENT);
+                result.add(repository.save(booking));
             }
-            Booking booking = new Booking();
-            booking.setPnr(UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase());
-            booking.setOwnerEmail(email);
-            booking.setFlightId(request.flightId());
-            booking.setPassengerId(traveler.passengerId());
-            booking.setSeatNumber(traveler.seatNumber().toUpperCase());
-            booking.setAmount(traveler.amount());
-            booking.setStatus(BookingStatus.PENDING_PAYMENT);
-            booking.setCreatedAt(LocalDateTime.now());
-            result.add(repository.save(booking));
+        } catch (ResponseStatusException ex) {
+            // Release all locks acquired so far before propagating the conflict
+            acquiredLocks.forEach(redis::delete);
+            throw ex;
         }
         return result;
     }
@@ -143,10 +166,30 @@ public class BookingController {
             @NotNull @Positive Long flightId,
             @NotNull @Positive Long passengerId,
             @NotBlank @Pattern(regexp = "[0-9]{1,3}[A-Za-z]") String seatNumber,
-            @NotNull @Positive BigDecimal amount) {}
+            @NotNull @Positive BigDecimal amount,
+            @Pattern(regexp = "(?i)ECONOMY|BUSINESS") String cabinClass) {
+        BookingRequest(Long flightId, Long passengerId, String seatNumber, BigDecimal amount) {
+            this(flightId, passengerId, seatNumber, amount, "ECONOMY");
+        }
+    }
 
     record TravelerSeat(@NotNull @Positive Long passengerId,
             @NotBlank @Pattern(regexp = "[0-9]{1,3}[A-Za-z]") String seatNumber,
-            @NotNull @Positive BigDecimal amount) {}
+            @NotNull @Positive BigDecimal amount,
+            @Pattern(regexp = "(?i)ECONOMY|BUSINESS") String cabinClass) {
+        TravelerSeat(Long passengerId, String seatNumber, BigDecimal amount) {
+            this(passengerId, seatNumber, amount, "ECONOMY");
+        }
+    }
     record GroupBookingRequest(@NotNull @Positive Long flightId, @NotEmpty List<@Valid TravelerSeat> travelers) {}
+
+    private String normalizeCabinClass(String cabinClass) {
+        String normalized = cabinClass == null || cabinClass.isBlank()
+                ? "ECONOMY"
+                : cabinClass.trim().toUpperCase(Locale.ROOT);
+        if (!normalized.equals("ECONOMY") && !normalized.equals("BUSINESS")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cabin class must be ECONOMY or BUSINESS");
+        }
+        return normalized;
+    }
 }

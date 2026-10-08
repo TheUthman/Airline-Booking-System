@@ -20,6 +20,6 @@ public class PricingQuoteService {
         BigDecimal total = subtotal.subtract(promoDiscount).subtract(pointsDiscount).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
         return new PriceQuote(request.flightId(), request.cabin(), request.baseFare(), multiplier.setScale(2, RoundingMode.HALF_UP),
                 promoDiscount.setScale(2, RoundingMode.HALF_UP), pointsDiscount.setScale(2, RoundingMode.HALF_UP), total,
-                List.of("Base fare", "Advance-purchase adjustment", "Seat-demand adjustment", "Cabin adjustment", "Eligible discounts"));
+                List.of("Published cabin fare", "Advance-purchase adjustment", "Seat-demand adjustment", "Eligible discounts"));
     }
 }

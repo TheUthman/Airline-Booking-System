@@ -2,57 +2,120 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Payment Confirmation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Receipt – TigerAirlines</title>
 </head>
-<body style="margin: 0; padding: 20px; background-color: #f1f5f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+<body style="margin: 0; padding: 32px 16px; background-color: #faf7f2;
+             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden;
+                  border: 1px solid #e6e0d6; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+
+        <!-- Header -->
         <tr>
             <td>
                 <div th:replace="~{fragments/header :: email-header('Payment Receipt')}"></div>
             </td>
         </tr>
+
+        <!-- Body -->
         <tr>
-            <td style="padding: 28px 24px; color: #1e293b;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <div style="display: inline-block; background-color: #dcfce7; color: #166534; padding: 10px 16px; border-radius: 9999px; font-weight: 600; font-size: 14px;">
-                        ✓ Payment Successful
+            <td style="padding: 36px 32px 28px 32px; background-color: #ffffff;">
+
+                <!-- Success Icon -->
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="display: inline-block; background-color: #f0fdf4; border: 1px solid #bbf7d0;
+                                border-radius: 50%; width: 56px; height: 56px; line-height: 56px;
+                                font-size: 26px; text-align: center;">
+                        ✓
                     </div>
+                    <p style="margin: 12px 0 4px 0; font-size: 22px; font-weight: 800; color: #171717; letter-spacing: -0.3px;">
+                        Payment Successful
+                    </p>
+                    <p style="margin: 0; font-size: 14px; color: #6b7280;">
+                        Your payment has been received and processed securely.
+                    </p>
                 </div>
 
-                <p style="margin: 0 0 20px 0; line-height: 1.5; color: #475569; text-align: center;">
-                    We have successfully received your payment for Booking Reference 
-                    <strong th:text="|#${bookingId}|">#1001</strong>.
-                </p>
+                <!-- Amount Box -->
+                <div th:if="${amount != null}"
+                     style="background-color: #faf7f2; border: 1px solid #e6e0d6;
+                            border-radius: 8px; padding: 18px; text-align: center; margin-bottom: 24px;">
+                    <p style="margin: 0 0 4px 0; font-size: 11px; font-weight: 700; color: #6b7280;
+                               text-transform: uppercase; letter-spacing: 0.5px;">Amount Paid</p>
+                    <p style="margin: 0; font-size: 32px; font-weight: 800; color: #171717;"
+                       th:text="|$${amount}|">$250.00</p>
+                </div>
 
-                <table width="100%" cellpadding="10" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
-                    <tr th:if="${paymentId != null}">
-                        <td style="font-size: 13px; color: #64748b; width: 45%;">Payment ID:</td>
-                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${paymentId}">123</td>
+                <!-- Transaction Details Table -->
+                <table width="100%" border="0" cellpadding="0" cellspacing="0"
+                       style="border: 1px solid #e6e0d6; border-radius: 8px; overflow: hidden;
+                              margin-bottom: 24px; border-collapse: separate; border-spacing: 0;">
+
+                    <tr style="background-color: #f3eee6;">
+                        <td colspan="2" style="padding: 10px 16px; font-size: 11px; font-weight: 700;
+                                               color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;
+                                               border-bottom: 1px solid #e6e0d6;">
+                            Transaction Details
+                        </td>
                     </tr>
-                    <tr th:if="${providerReference != null}">
-                        <td style="font-size: 13px; color: #64748b;">Transaction Ref:</td>
-                        <td style="font-size: 14px; font-weight: 600; color: #0f172a; word-break: break-all;" th:text="${providerReference}">pay_abc123</td>
+
+                    <tr style="border-bottom: 1px solid #e6e0d6;">
+                        <td style="padding: 12px 16px; font-size: 12px; font-weight: 600;
+                                   color: #6b7280; background-color: #faf7f2; width: 42%; border-bottom: 1px solid #e6e0d6;">
+                            Booking Reference
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #e87516;
+                                   background-color: #ffffff; border-bottom: 1px solid #e6e0d6;"
+                            th:text="|#${bookingId}|">#1001</td>
                     </tr>
+
+                    <tr th:if="${paymentId != null}" style="border-bottom: 1px solid #e6e0d6;">
+                        <td style="padding: 12px 16px; font-size: 12px; font-weight: 600;
+                                   color: #6b7280; background-color: #faf7f2; border-bottom: 1px solid #e6e0d6;">
+                            Payment ID
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 13px; color: #171717;
+                                   background-color: #ffffff; border-bottom: 1px solid #e6e0d6;"
+                            th:text="${paymentId}">123</td>
+                    </tr>
+
+                    <tr th:if="${providerReference != null}" style="border-bottom: 1px solid #e6e0d6;">
+                        <td style="padding: 12px 16px; font-size: 12px; font-weight: 600;
+                                   color: #6b7280; background-color: #faf7f2; border-bottom: 1px solid #e6e0d6;">
+                            Transaction Reference
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 12px; color: #4b5563;
+                                   background-color: #ffffff; border-bottom: 1px solid #e6e0d6;
+                                   word-break: break-all; font-family: monospace;"
+                            th:text="${providerReference}">pay_abc123</td>
+                    </tr>
+
                     <tr th:if="${paymentMethod != null}">
-                        <td style="font-size: 13px; color: #64748b;">Payment Method:</td>
-                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${paymentMethod}">Credit Card</td>
-                    </tr>
-                    <tr style="border-top: 1px solid #cbd5e1;">
-                        <td style="font-size: 14px; font-weight: 700; color: #0f172a;">Amount Paid:</td>
-                        <td style="font-size: 18px; font-weight: 800; color: #16a34a;" th:text="|$${amount}|">$250.00</td>
+                        <td style="padding: 12px 16px; font-size: 12px; font-weight: 600;
+                                   color: #6b7280; background-color: #faf7f2;">
+                            Payment Method
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 13px; color: #171717; background-color: #ffffff;"
+                            th:text="${paymentMethod}">Credit Card</td>
                     </tr>
                 </table>
 
-                <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.4;">
-                    An electronic invoice has been generated for your transaction. If you need any billing assistance, please reply directly to this email or contact support.
+                <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center; line-height: 1.5;">
+                    This email serves as your official receipt for this transaction.
                 </p>
+
             </td>
         </tr>
+
+        <!-- Footer -->
         <tr>
             <td>
                 <div th:replace="~{fragments/footer :: email-footer}"></div>
             </td>
         </tr>
     </table>
+
 </body>
 </html>

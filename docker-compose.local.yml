@@ -1,0 +1,51 @@
+# Local-only resource tuning.
+#
+# Run with:
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+#
+# This file intentionally overrides JVM sizing only. It does not change routes,
+# databases, ports, security, or production configuration.
+services:
+  config-server:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx160m -XX:+UseSerialGC"
+
+  service-registry:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx160m -XX:+UseSerialGC"
+
+  api-gateway:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx256m -XX:+UseSerialGC"
+
+  auth-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx192m -XX:+UseSerialGC"
+
+  flight-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx192m -XX:+UseSerialGC"
+
+  pricing-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx160m -XX:+UseSerialGC"
+
+  passenger-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx192m -XX:+UseSerialGC"
+
+  booking-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx192m -XX:+UseSerialGC"
+
+  payment-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx192m -XX:+UseSerialGC"
+
+  notification-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx192m -XX:+UseSerialGC"
+
+  admin-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms32m -Xmx160m -XX:+UseSerialGC"

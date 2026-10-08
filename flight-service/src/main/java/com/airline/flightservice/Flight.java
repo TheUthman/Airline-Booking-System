@@ -33,6 +33,9 @@ public class Flight {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal fare;
 
+    @Column(nullable = false, precision = 12, scale = 2, columnDefinition = "numeric(12,2) default 0")
+    private BigDecimal businessFare = BigDecimal.ZERO;
+
     @Column(nullable = false)
     private int availableSeats;
 
@@ -41,11 +44,31 @@ public class Flight {
 
     private String airline;
     private String aircraftCode;
-    private String status = "SCHEDULED";
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FlightStatus status = FlightStatus.SCHEDULED;
+
     private Integer delayMinutes = 0;
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;
@@ -99,6 +122,14 @@ public class Flight {
         fare = v;
     }
 
+    public BigDecimal getBusinessFare() {
+        return businessFare == null ? BigDecimal.ZERO : businessFare;
+    }
+
+    public void setBusinessFare(BigDecimal v) {
+        businessFare = v == null ? BigDecimal.ZERO : v;
+    }
+
     public int getAvailableSeats() {
         return availableSeats;
     }
@@ -113,8 +144,8 @@ public class Flight {
     public void setAirline(String v) { airline = v; }
     public String getAircraftCode() { return aircraftCode; }
     public void setAircraftCode(String v) { aircraftCode = v; }
-    public String getStatus() { return status; }
-    public void setStatus(String v) { status = v; }
+    public FlightStatus getStatus() { return status; }
+    public void setStatus(FlightStatus v) { status = v; }
     public Integer getDelayMinutes() { return delayMinutes; }
     public void setDelayMinutes(Integer v) { delayMinutes = v; }
 

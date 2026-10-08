@@ -58,11 +58,23 @@ public class PaymentEventListener {
                 .findById(bookingId)
                 .ifPresent(
                         b -> {
-                            if (b.getStatus() != BookingStatus.PENDING_PAYMENT) return;
-                            boolean paid = "payment.succeeded".equals(event.path("type").asText());
-                            b.setStatus(paid ? BookingStatus.CONFIRMED : BookingStatus.CANCELLED);
-                            repository.save(b);
-                            redis.delete("seat-lock:" + b.getFlightId() + ":" + b.getSeatNumber());
+                            String type = event.path("type").asText();
+                            if ("payment.succeeded".equals(type)
+                                    && b.getStatus() == BookingStatus.PENDING_PAYMENT) {
+                                b.setStatus(BookingStatus.CONFIRMED);
+                                repository.save(b);
+                                redis.delete("seat-lock:" + b.getFlightId() + ":" + b.getSeatNumber());
+                            } else if ("payment.refunded".equals(type)
+                                    && b.getStatus() == BookingStatus.CONFIRMED) {
+                                // Refund received \u2014 cancel the booking
+                                b.setStatus(BookingStatus.CANCELLED);
+                                repository.save(b);
+                            } else if ("payment.failed".equals(type)
+                                    && b.getStatus() == BookingStatus.PENDING_PAYMENT) {
+                                b.setStatus(BookingStatus.CANCELLED);
+                                repository.save(b);
+                                redis.delete("seat-lock:" + b.getFlightId() + ":" + b.getSeatNumber());
+                            }
                         });
     }
 

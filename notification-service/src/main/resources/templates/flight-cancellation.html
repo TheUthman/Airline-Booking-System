@@ -2,60 +2,130 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Flight Cancellation Notice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flight Cancellation Notice – TigerAirlines</title>
 </head>
-<body style="margin: 0; padding: 20px; background-color: #f1f5f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+<body style="margin: 0; padding: 32px 16px; background-color: #faf7f2;
+             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden;
+                  border: 1px solid #e6e0d6; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+
+        <!-- Header -->
         <tr>
             <td>
                 <div th:replace="~{fragments/header :: email-header('Important Flight Notice')}"></div>
             </td>
         </tr>
+
+        <!-- Body -->
         <tr>
-            <td style="padding: 28px 24px; color: #1e293b;">
-                <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 4px; margin-bottom: 20px;">
-                    <h3 style="margin: 0 0 6px 0; color: #991b1b; font-size: 16px;">Flight Cancellation Notification</h3>
-                    <p style="margin: 0; color: #b91c1c; font-size: 14px;">
-                        We regret to inform you that flight <strong th:text="${flightNumber}">SW-101</strong> has been cancelled.
+            <td style="padding: 36px 32px 28px 32px; background-color: #ffffff;">
+
+                <!-- Notice Banner -->
+                <div style="background-color: #fef2f2; border: 1px solid #fecaca;
+                            border-radius: 8px; padding: 18px 20px; margin-bottom: 24px; text-align: center;">
+                    <p style="margin: 0 0 6px 0; font-size: 18px; font-weight: 800; color: #991b1b;">
+                        Flight Cancellation Notice
+                    </p>
+                    <p style="margin: 0; font-size: 14px; color: #b91c1c; line-height: 1.5;">
+                        We sincerely apologize — flight
+                        <strong th:text="${flightNumber}">TA-101</strong>
+                        has been cancelled.
                     </p>
                 </div>
 
-                <table width="100%" cellpadding="10" cellspacing="0" style="background-color: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-                    <tr>
-                        <td style="font-size: 13px; color: #64748b; width: 40%;">Flight Number:</td>
-                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${flightNumber}">SW-101</td>
+                <!-- Flight Details Table -->
+                <table width="100%" border="0" cellpadding="0" cellspacing="0"
+                       style="border: 1px solid #e6e0d6; border-radius: 8px; overflow: hidden;
+                              margin-bottom: 24px; border-collapse: separate; border-spacing: 0;">
+
+                    <tr style="background-color: #f3eee6;">
+                        <td colspan="2" style="padding: 10px 16px; font-size: 11px; font-weight: 700;
+                                               color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;
+                                               border-bottom: 1px solid #e6e0d6;">
+                            Flight Information
+                        </td>
                     </tr>
-                    <tr th:if="${origin != null and destination != null}">
-                        <td style="font-size: 13px; color: #64748b;">Route:</td>
-                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="|${origin} → ${destination}|">LHR → JFK</td>
+
+                    <tr style="border-bottom: 1px solid #e6e0d6;">
+                        <td style="padding: 12px 16px; font-size: 12px; font-weight: 600;
+                                   color: #6b7280; background-color: #faf7f2; width: 42%; border-bottom: 1px solid #e6e0d6;">
+                            Flight Number
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #171717;
+                                   background-color: #ffffff; border-bottom: 1px solid #e6e0d6;"
+                            th:text="${flightNumber}">TA-101</td>
                     </tr>
-                    <tr th:if="${departureDate != null}">
-                        <td style="font-size: 13px; color: #64748b;">Scheduled Date:</td>
-                        <td style="font-size: 14px; font-weight: 600; color: #0f172a;" th:text="${departureDate}">2026-09-15</td>
+
+                    <tr th:if="${origin != null and destination != null}" style="border-bottom: 1px solid #e6e0d6;">
+                        <td style="padding: 12px 16px; font-size: 12px; font-weight: 600;
+                                   color: #6b7280; background-color: #faf7f2; border-bottom: 1px solid #e6e0d6;">
+                            Route
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #171717;
+                                   background-color: #ffffff; border-bottom: 1px solid #e6e0d6;"
+                            th:text="|${origin} → ${destination}|">LOS → ABV</td>
                     </tr>
+
+                    <tr th:if="${departureDate != null}" style="border-bottom: 1px solid #e6e0d6;">
+                        <td style="padding: 12px 16px; font-size: 12px; font-weight: 600;
+                                   color: #6b7280; background-color: #faf7f2; border-bottom: 1px solid #e6e0d6;">
+                            Scheduled Date
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 14px; color: #171717;
+                                   background-color: #ffffff; border-bottom: 1px solid #e6e0d6;"
+                            th:text="${departureDate}">2026-10-15</td>
+                    </tr>
+
                     <tr th:if="${reason != null}">
-                        <td style="font-size: 13px; color: #64748b;">Reason:</td>
-                        <td style="font-size: 14px; color: #475569;" th:text="${reason}">Operational constraints</td>
+                        <td style="padding: 12px 16px; font-size: 12px; font-weight: 600;
+                                   color: #6b7280; background-color: #faf7f2; vertical-align: top;">
+                            Reason
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 13px; color: #4b5563; line-height: 1.5; background-color: #ffffff;"
+                            th:text="${reason}">Operational constraints</td>
                     </tr>
                 </table>
 
-                <h4 style="margin: 0 0 8px 0; color: #0f172a; font-size: 15px;">Next Steps & Rebooking</h4>
-                <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.5; color: #475569;">
-                    You are eligible for a full refund or free rebooking to an alternative flight. Please visit our rebooking portal or contact customer service for immediate assistance.
-                </p>
+                <!-- Options Card -->
+                <div style="background-color: #faf7f2; border: 1px solid #e6e0d6; border-radius: 8px;
+                            padding: 18px 20px; margin-bottom: 24px;">
+                    <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 700; color: #171717; text-transform: uppercase; letter-spacing: 0.3px;">
+                        Your Available Options
+                    </p>
+                    <ul style="margin: 0; padding-left: 18px; color: #4b5563; font-size: 13px; line-height: 1.8;">
+                        <li>Full refund to your original payment method</li>
+                        <li>Complimentary rebooking to the next available TigerAirlines flight</li>
+                        <li>Travel voucher towards any future booking</li>
+                    </ul>
+                </div>
 
-                <div th:if="${refundPolicyUrl != null}" style="text-align: center; margin: 24px 0;">
-                    <a th:href="${refundPolicyUrl}" href="#" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; display: inline-block;">
-                        Manage Booking & Refund
+                <!-- CTA Button -->
+                <div th:if="${refundPolicyUrl != null}" style="text-align: center; margin-bottom: 20px;">
+                    <a th:href="${refundPolicyUrl}" href="#"
+                       style="display: inline-block; background-color: #e87516; color: #ffffff;
+                              text-decoration: none; padding: 14px 34px; border-radius: 8px;
+                              font-weight: 700; font-size: 14px; letter-spacing: 0.2px;">
+                        Manage Booking &amp; Refund
                     </a>
                 </div>
+
+                <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6; text-align: center;">
+                    Our customer support team is available 24/7 should you need assistance with rebooking.
+                </p>
+
             </td>
         </tr>
+
+        <!-- Footer -->
         <tr>
             <td>
                 <div th:replace="~{fragments/footer :: email-footer}"></div>
             </td>
         </tr>
     </table>
+
 </body>
 </html>

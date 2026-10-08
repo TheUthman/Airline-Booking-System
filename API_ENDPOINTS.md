@@ -39,9 +39,9 @@ This document lists every HTTP endpoint exposed by the micro-services in the rep
 
 | Method | URL | Description | Request Body | Success Response |
 |--------|-----|-------------|--------------|------------------|
-| `POST` | `/api/pricing/quote` | Calculate a dynamic quote without changing the stored base fare (advance-purchase, load-factor, cabin, promo-code and frequent-flyer-point rules). | `{ "flightId":123,"baseFare":199.99,"departureDate":"2026-10-01","availableSeats":30,"totalSeats":180,"cabin":"ECONOMY","promoCode":"WELCOME10","frequentFlyerPoints":500 }` | `200 OK` -> `{ "flightId":123,"cabin":"ECONOMY","baseFare":199.99,"multiplier":1.0,"promoDiscount":19.99,"frequentFlyerPointsDiscount":5.00,"total":175.00,"appliedRules":["..."] }` |
+| `POST` | `/api/pricing/quote` | Calculate a dynamic quote without changing the stored cabin base fare (advance-purchase, load-factor, promo-code and frequent-flyer-point rules). | `{ "flightId":123,"baseFare":199.99,"departureDate":"2026-10-01","availableSeats":30,"totalSeats":180,"cabin":"ECONOMY","promoCode":"WELCOME10","frequentFlyerPoints":500 }` | `200 OK` -> `{ "flightId":123,"cabin":"ECONOMY","baseFare":199.99,"multiplier":1.0,"promoDiscount":19.99,"frequentFlyerPointsDiscount":5.00,"total":175.00,"appliedRules":["..."] }` |
 
-Pricing rules: departures within 3 days add 35%; 4-14 days add 15%; flights 65% / 85%+ occupied add 10% / 25%; BUSINESS and FIRST cabins apply 1.80x and 2.75x multipliers. `WELCOME10` grants 10%, and every 100 frequent-flyer points offsets one currency unit (capped at 100).
+Pricing rules: departures within 3 days add 35%; 4-14 days add 15%; flights 65% / 85%+ occupied add 10% / 25%. Cabin multipliers are not applied: Flight Service supplies the independently managed Economy or Business base fare. `WELCOME10` grants 10%, and every 100 frequent-flyer points offsets one currency unit (capped at 100).
 
 ## Passenger Service (`passenger-service`)
 
@@ -61,12 +61,12 @@ Passenger object: `{ "id", "ownerEmail", "firstName", "lastName", "dateOfBirth",
 |--------|-----|-------------|--------------|------------------|
 | `GET` | `/api/bookings` | List the caller's bookings. | - | `200 OK` -> list of bookings |
 | `GET` | `/api/bookings/{id}` | Retrieve one of the caller's bookings. | - | `200 OK` -> booking object |
-| `POST` | `/api/bookings` | Create a booking and **lock** the seat for 10 min (Redis). | `{ "flightId":123,"passengerId":456,"seatNumber":"12A","amount":199.99 }` | `201 Created` -> booking with status `PENDING_PAYMENT`; `409 Conflict` if the seat is locked |
-| `POST` | `/api/bookings/group` | Create one pending booking per traveller (each seat locked independently). | `{ "flightId":123,"travelers":[ { "passengerId":1,"seatNumber":"12A","amount":199.99 }, { "passengerId":2,"seatNumber":"12B","amount":199.99 } ] }` | `201 Created` -> list of bookings |
+| `POST` | `/api/bookings` | Create a booking and **lock** the seat for 10 min (Redis). `cabinClass` is `ECONOMY` or `BUSINESS`; omitted values default to Economy for older clients. | `{ "flightId":123,"passengerId":456,"seatNumber":"12A","amount":199.99,"cabinClass":"BUSINESS" }` | `201 Created` -> booking with status `PENDING_PAYMENT` and persisted cabin class; `409 Conflict` if the seat is locked |
+| `POST` | `/api/bookings/group` | Create one pending booking per traveller (each seat locked independently). Each traveler may include `cabinClass`. | `{ "flightId":123,"travelers":[ { "passengerId":1,"seatNumber":"12A","amount":199.99,"cabinClass":"ECONOMY" } ] }` | `201 Created` -> list of bookings |
 | `POST` | `/api/bookings/{id}/upgrade` | Change a pending booking's seat and add the price difference. | Query params `seatNumber` and `additionalAmount` | `200 OK` -> updated booking |
 | `POST` | `/api/bookings/{id}/cancel` | Cancel a pending booking (confirmed bookings require support). | - | `200 OK` -> booking with status `CANCELLED` |
 
-Booking object: `{ "id", "pnr", "ownerEmail", "flightId", "passengerId", "seatNumber", "amount", "status" ("PENDING_PAYMENT"|"CONFIRMED"|"CANCELLED"|"EXPIRED"), "createdAt" }`
+Booking object: `{ "id", "pnr", "ownerEmail", "flightId", "passengerId", "seatNumber", "cabinClass" ("ECONOMY"|"BUSINESS"), "amount", "status" ("PENDING_PAYMENT"|"CONFIRMED"|"CANCELLED"|"EXPIRED"), "createdAt" }`
 
 ## Payment Service (`payment-service`)
 
@@ -103,14 +103,14 @@ Notification object: `{ "id", "eventType", "recipient", "payload", "deliveryStat
 
 | Method | URL | Description | Request Body / Params | Success Response |
 |--------|-----|-------------|----------------------|------------------|
-| `GET` | `/api/flights/search` | Search active flights. Query params: `origin` (3 letters, required), `destination` (3 letters, required), `date` (ISO), `passengers` (default 1); optional `airline`, `maxPrice`, `maxDurationMinutes`. | - | `200 OK` -> list of flight objects |
+| `GET` | `/api/flights/search` | Search active flights. Query params: `origin` (3 letters, required), `destination` (3 letters, required), `date` (ISO), `passengers` (default 1), `cabin` (`ECONOMY` by default or `BUSINESS`); optional `airline`, `maxPrice`, `maxDurationMinutes`. Business searches omit flights without a Business fare. | - | `200 OK` -> list of flight objects |
 | `GET` | `/api/flights/{id}` | Retrieve flight details by ID. | - | `200 OK` -> flight object |
-| `POST` | `/api/flights/admin` | **ADMIN** - create a flight. | `{ "flightNumber":"AB123","origin":"JFK","destination":"LAX","departureTime":"2026-10-01T08:00","arrivalTime":"2026-10-01T11:00","fare":199.99,"availableSeats":150,"totalSeats":180,"airline":"Sky High","aircraftCode":"B738" }` | `201 Created` -> saved flight |
+| `POST` | `/api/flights/admin` | **ADMIN** - create a flight. `fare` is the Economy base fare; `businessFare` is independently managed and may be 0 to disable Business. Existing `availableSeats` and `totalSeats` remain shared flight capacity. | `{ "flightNumber":"AB123","origin":"JFK","destination":"LAX","departureTime":"2026-10-01T08:00","arrivalTime":"2026-10-01T11:00","fare":199.99,"businessFare":499.99,"availableSeats":150,"totalSeats":180,"airline":"Sky High","aircraftCode":"B738" }` | `201 Created` -> saved flight |
 | `PUT` | `/api/flights/admin/{id}` | **ADMIN** - update an existing flight. | Same shape as POST | `200 OK` -> updated flight |
 | `POST` | `/api/flights/admin/{id}/delay` | **ADMIN** - delay a flight by N minutes. | Query param `minutes` (>= 1) | `200 OK` -> flight with status `DELAYED` |
 | `POST` | `/api/flights/admin/{id}/cancel` | **ADMIN** - cancel a flight (deactivates it). | - | `200 OK` -> flight with `active=false`, status `CANCELLED` |
 
-Flight object: `{ "id", "flightNumber", "origin", "destination", "departureTime", "arrivalTime", "fare", "availableSeats", "totalSeats", "airline", "aircraftCode", "status" ("SCHEDULED"|"DELAYED"|"CANCELLED"), "delayMinutes", "active" }`
+Flight object: `{ "id", "flightNumber", "origin", "destination", "departureTime", "arrivalTime", "fare" (Economy), "businessFare", "availableSeats", "totalSeats", "airline", "aircraftCode", "status" ("SCHEDULED"|"DELAYED"|"CANCELLED"), "delayMinutes", "active" }`. Existing records retain `fare` as Economy and default to Business fare 0.
 
 ### Airport & aircraft catalogue (**ADMIN**)
 

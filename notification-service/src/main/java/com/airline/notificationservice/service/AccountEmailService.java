@@ -52,7 +52,7 @@ public class AccountEmailService {
             variables.put("expireInMinutes", request.expireInMinutes());
 
             String htmlBody = templateEngine.render("password-reset", variables);
-            String subject = "Reset Your Airline Account Password";
+            String subject = "Reset Your TigerAirlines Password";
 
             emailClient.sendEmail(request.recipientEmail(), subject, htmlBody);
             notification.setDeliveryStatus("SENT");
@@ -91,7 +91,7 @@ public class AccountEmailService {
             variables.put("token", token);
 
             String htmlBody = templateEngine.render("account-verification", variables);
-            String subject = "Verify Your Airline Account";
+            String subject = "Verify Your TigerAirlines Account";
 
             emailClient.sendEmail(request.recipientEmail(), subject, htmlBody);
             notification.setDeliveryStatus("SENT");

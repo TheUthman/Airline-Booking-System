@@ -25,7 +25,12 @@ public class PassengerController {
     }
 
     @GetMapping
-    List<Passenger> list(@RequestHeader("X-User-Email") String email) {
+    List<Passenger> list(
+            @RequestHeader("X-User-Email") String email,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return repository.findAll();
+        }
         return mine(email);
     }
 

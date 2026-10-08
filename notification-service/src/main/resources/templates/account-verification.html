@@ -3,52 +3,89 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Verify Your Account</title>
+    <title>Verify Your Email – TigerAirlines</title>
 </head>
-<body style="margin: 0; padding: 20px; background-color: #f1f5f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+<body style="margin: 0; padding: 32px 16px; background-color: #faf7f2;
+             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden;
+                  border: 1px solid #e6e0d6; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+
+        <!-- Header -->
         <tr>
             <td>
-                <div th:replace="~{fragments/header :: email-header('Welcome to SkyWings Airlines')}"></div>
+                <div th:replace="~{fragments/header :: email-header('Verify Your Email Address')}"></div>
             </td>
         </tr>
+
+        <!-- Body -->
         <tr>
-            <td style="padding: 28px 24px; color: #1e293b;">
-                <p style="margin: 0 0 16px 0; font-size: 15px; color: #334155;">
-                    Welcome <span th:text="${userName != null ? userName : 'aboard'}">aboard</span>! ✈️
+            <td style="padding: 36px 32px 28px 32px; background-color: #ffffff;">
+
+                <!-- Greeting -->
+                <p style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #171717; line-height: 1.3;">
+                    Welcome aboard,
+                    <span th:text="${userName != null ? userName : 'Traveler'}" style="color: #e87516;">Traveler</span>! ✈️
                 </p>
-                <p style="margin: 0 0 20px 0; line-height: 1.5; color: #475569;">
-                    Thanks for creating an account with SkyWings. Please verify your email address to activate your account and start managing your flight bookings:
+                <p style="margin: 0 0 28px 0; font-size: 15px; color: #6b7280; line-height: 1.6;">
+                    Thank you for joining TigerAirlines. Please verify your email address to confirm your account and start booking flights across our network.
                 </p>
 
-                <div style="text-align: center; margin: 28px 0;">
-                    <a th:href="${verificationUrl}" href="#" style="background-color: #16a34a; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 700; font-size: 15px; display: inline-block;">
+                <!-- CTA Button -->
+                <div style="text-align: center; margin: 0 0 28px 0;">
+                    <a th:href="${verificationUrl}" href="#"
+                       style="display: inline-block; background-color: #e87516; color: #ffffff;
+                              text-decoration: none; padding: 14px 36px; border-radius: 8px;
+                              font-weight: 700; font-size: 15px; letter-spacing: 0.2px;">
                         Verify Email Address
                     </a>
                 </div>
 
-                <div th:if="${token != null and token != ''}" style="margin: 20px 0; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 16px; text-align: center;">
-                    <p style="margin: 0 0 6px 0; font-size: 13px; color: #64748b; font-weight: 500;">
-                        Or copy your verification token:
+                <!-- Token fallback -->
+                <div th:if="${token != null and token != ''}"
+                     style="margin: 0 0 24px 0; background-color: #faf7f2; border: 1px dashed #e6e0d6;
+                            border-radius: 8px; padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700;
+                               color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Or enter this verification code
                     </p>
-                    <code style="font-family: monospace; font-size: 16px; font-weight: bold; color: #0f172a; word-break: break-all; user-select: all;" th:text="${token}">
-                        token-code
+                    <code style="display: block; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+                                 font-size: 18px; font-weight: 700; color: #e87516;
+                                 letter-spacing: 2px; word-break: break-all;"
+                          th:text="${token}">
+                        XXXXXXXXXXXX
                     </code>
                 </div>
 
-                <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 20px;">
-                    <p style="margin: 0; font-size: 11px; color: #94a3b8; word-break: break-all;">
-                        Button not working? Copy and paste this link into your browser:<br />
-                        <span th:text="${verificationUrl}">https://airline.com/verify-email?token=xyz</span>
+                <!-- Security note -->
+                <div style="background-color: #fffaf0; border-left: 3px solid #e87516;
+                            padding: 12px 16px; border-radius: 0 6px 6px 0; margin-bottom: 24px;">
+                    <p style="margin: 0; font-size: 13px; color: #78350f; line-height: 1.5;">
+                        <strong>Didn't create an account?</strong> You can safely ignore this email. No active account will be created without verification.
                     </p>
                 </div>
+
+                <!-- Fallback URL -->
+                <div style="border-top: 1px solid #e6e0d6; padding-top: 16px;">
+                    <p style="margin: 0; font-size: 11px; color: #9ca3af; line-height: 1.6; word-break: break-all;">
+                        Trouble clicking the button? Copy and paste this link into your browser:<br/>
+                        <span th:text="${verificationUrl}" style="color: #e87516;">
+                            https://tigerairlines.com/verify-email?token=xyz
+                        </span>
+                    </p>
+                </div>
+
             </td>
         </tr>
+
+        <!-- Footer -->
         <tr>
             <td>
                 <div th:replace="~{fragments/footer :: email-footer}"></div>
             </td>
         </tr>
     </table>
+
 </body>
 </html>

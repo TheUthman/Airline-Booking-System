@@ -10,6 +10,6 @@ public record PriceRequest(
         @NotNull @FutureOrPresent LocalDate departureDate,
         @Min(0) int availableSeats,
         @Min(1) int totalSeats,
-        @NotBlank String cabin,
+        @NotBlank @Pattern(regexp = "(?i)ECONOMY|BUSINESS") String cabin,
         String promoCode,
         @PositiveOrZero int frequentFlyerPoints) {}

@@ -80,12 +80,14 @@ public class SecurityConfig {
                                                                                 "/api/auth/verification",
                                                                                 "/api/auth/verification/confirm",
                                                                                 "/api/payments/initiate",
-                                                                                "/api/payments/webhook")
+                                                                                "/api/payments/webhook",
+                                                                                "/api/pricing/**")
                                                                 .permitAll()
                                                                 .requestMatchers(
                                                                                 "/api/flights/admin/**",
                                                                                 "/api/admin/**",
                                                                                 "/api/auth/promote/**",
+                                                                                "/api/auth/users/**",
                                                                                 "/api/auth/users")
                                                                 .hasRole("ADMIN")
 

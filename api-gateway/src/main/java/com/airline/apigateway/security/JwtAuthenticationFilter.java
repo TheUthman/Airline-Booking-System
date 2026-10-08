@@ -63,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (path.equals("/error") || path.startsWith("/actuator") || path.startsWith("/fallback")) {
             return true;
         }
-        if (path.equals("/api/payments/webhook")) {
+        if (path.equals("/api/payments/webhook") || path.startsWith("/api/pricing")) {
             return true;
         }
         if (path.equals("/api/auth/register")

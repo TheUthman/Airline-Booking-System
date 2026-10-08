@@ -18,14 +18,7 @@ public class PricingPolicy {
         double loadFactor = 1.0 - ((double) request.availableSeats() / request.totalSeats());
         if (loadFactor >= .85) multiplier = multiplier.multiply(new BigDecimal("1.25"));
         else if (loadFactor >= .65) multiplier = multiplier.multiply(new BigDecimal("1.10"));
-        return multiplier.multiply(cabinMultiplier(request.cabin()));
+        return multiplier;
     }
     public boolean eligiblePromo(String code) { return code != null && code.equalsIgnoreCase("WELCOME10"); }
-    private BigDecimal cabinMultiplier(String cabin) {
-        return switch (cabin.toUpperCase()) {
-            case "BUSINESS" -> new BigDecimal("1.80");
-            case "FIRST" -> new BigDecimal("2.75");
-            default -> BigDecimal.ONE;
-        };
-    }
 }

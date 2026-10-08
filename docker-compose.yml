@@ -38,6 +38,8 @@ services:
   redis:
     image: redis:7-alpine
 
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-airline_redis_local_password}"]
+
     ports:
       - "6379:6379"
 
@@ -45,7 +47,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "redis-cli ping | grep -q PONG || exit 1"
+          "redis-cli -a ${REDIS_PASSWORD:-airline_redis_local_password} ping | grep -q PONG || exit 1"
         ]
       interval: 5s
       timeout: 3s
@@ -228,6 +230,8 @@ services:
       FLIGHT_DB_USERNAME: airline
       FLIGHT_DB_PASSWORD: airline_local_password
 
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your environment}
+
     restart: unless-stopped
 
     depends_on:
@@ -304,6 +308,7 @@ services:
       BOOKING_DB_PASSWORD: airline_local_password
 
       REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-airline_redis_local_password}
 
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_USERNAME: airline

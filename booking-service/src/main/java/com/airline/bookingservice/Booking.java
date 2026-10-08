@@ -27,6 +27,9 @@ public class Booking {
     @Column(nullable = false)
     private String seatNumber;
 
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'ECONOMY'")
+    private String cabinClass = "ECONOMY";
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
@@ -36,6 +39,11 @@ public class Booking {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;
@@ -79,6 +87,14 @@ public class Booking {
 
     public void setSeatNumber(String v) {
         seatNumber = v;
+    }
+
+    public String getCabinClass() {
+        return cabinClass;
+    }
+
+    public void setCabinClass(String v) {
+        cabinClass = v;
     }
 
     public BigDecimal getAmount() {
