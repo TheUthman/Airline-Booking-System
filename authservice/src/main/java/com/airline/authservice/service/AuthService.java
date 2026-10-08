@@ -12,7 +12,10 @@ import com.airline.authservice.repository.UserRepository;
 import com.airline.authservice.security.JwtService;
 
 import com.airline.authservice.client.NotificationClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,8 @@ import java.util.UUID;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -48,31 +53,30 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("An account with this email already exists");
         }
 
         User user = new User();
 
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setEmail(request.email());
+        user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(Role.PASSENGER);
 
-        User savedUser = userRepository.save(user);
-
-        // Generate email verification token and trigger email dispatch
+        // Set verification token before the first (and only) save
         String verificationToken = UUID.randomUUID().toString().replace("-", "");
-        savedUser.setEmailVerificationToken(verificationToken);
-        savedUser = userRepository.save(savedUser);
+        user.setEmailVerificationToken(verificationToken);
+
+        User savedUser = userRepository.save(user);
         notificationClient.sendEmailVerification(savedUser.getEmail(), savedUser.getFirstName() + " " + savedUser.getLastName(), verificationToken);
 
+        // Revoke any stale tokens (safety net for re-registrations or DB imports)
+        refreshTokenRepository.revokeAllActiveForUser(savedUser.getId());
+
         String accessToken = jwtService.generateToken(savedUser);
-
         String refreshToken = jwtService.generateRefreshToken(savedUser);
-
         saveRefreshToken(savedUser, refreshToken);
 
         return new AuthResponse(
@@ -88,19 +92,19 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository
-                .findByEmail(request.getEmail())
+                .findByEmail(request.email())
                 .orElseThrow(
                         () -> new BadCredentialsException("Invalid email or password"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new BadCredentialsException("Invalid email or password");
         }
 
+        // Revoke all existing active tokens before issuing a new one
+        refreshTokenRepository.revokeAllActiveForUser(user.getId());
+
         String accessToken = jwtService.generateToken(user);
-
         String refreshToken = jwtService.generateRefreshToken(user);
-
         saveRefreshToken(user, refreshToken);
 
         return new AuthResponse(
@@ -116,7 +120,7 @@ public class AuthService {
     @Transactional
     public AuthResponse refreshToken(RefreshTokenRequest request) {
 
-        String tokenValue = request.getRefreshToken();
+        String tokenValue = request.refreshToken();
 
         RefreshToken storedToken = refreshTokenRepository
                 .findByToken(tokenValue)
@@ -168,25 +172,26 @@ public class AuthService {
         refreshTokenRepository.save(refreshToken);
     }
 
-    public User promoteToAdmin(Long userId) {
-
+    public User updateUserRole(Long userId, Role newRole) {
         User user = userRepository
                 .findById(userId)
                 .orElseThrow(
                         () -> new IllegalArgumentException(
                                 "User " + userId + " not found"));
 
-        if (user.getRole() == Role.ADMIN) {
-            throw new IllegalArgumentException("User " + userId + " is already an ADMIN");
-        }
-
-        user.setRole(Role.ADMIN);
-
+        user.setRole(newRole);
         return userRepository.save(user);
     }
 
-    public java.util.List<java.util.Map<String, Object>> listUsers() {
-        return userRepository.findAll().stream()
+    public User promoteToAdmin(Long userId) {
+        return updateUserRole(userId, Role.ADMIN);
+    }
+
+    public java.util.Map<String, Object> listUsers(int page, int size) {
+        org.springframework.data.domain.Pageable pageable =
+                org.springframework.data.domain.PageRequest.of(page, Math.min(size, 200));
+        org.springframework.data.domain.Page<User> pageResult = userRepository.findAll(pageable);
+        java.util.List<java.util.Map<String, Object>> content = pageResult.getContent().stream()
                 .map(user -> java.util.Map.<String, Object>of(
                         "id", user.getId(),
                         "email", user.getEmail(),
@@ -195,20 +200,27 @@ public class AuthService {
                         "role", user.getRole().name(),
                         "name", user.getFirstName() + " " + user.getLastName()))
                 .toList();
+        return java.util.Map.of(
+                "content", content,
+                "page", pageResult.getNumber(),
+                "size", pageResult.getSize(),
+                "totalElements", pageResult.getTotalElements(),
+                "totalPages", pageResult.getTotalPages());
     }
 
     /** Creates a one-time token. Delivery is delegated to notification-service by the caller. */
-    public String requestPasswordReset(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(
-                () -> new BadCredentialsException("No account exists for this email"));
-        String token = UUID.randomUUID().toString().replace("-", "");
-        user.setPasswordResetToken(token);
-        user.setPasswordResetExpiresAt(LocalDateTime.now().plusMinutes(30));
-        userRepository.save(user);
+    public void requestPasswordReset(String email) {
+        // Silently do nothing if the account doesn't exist — the caller always returns 202
+        // so we never reveal whether a given email is registered.
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String token = UUID.randomUUID().toString().replace("-", "");
+            user.setPasswordResetToken(token);
+            user.setPasswordResetExpiresAt(LocalDateTime.now().plusMinutes(30));
+            userRepository.save(user);
 
-        String fullName = (user.getFirstName() != null ? user.getFirstName() : "") + " " + (user.getLastName() != null ? user.getLastName() : "");
-        notificationClient.sendPasswordReset(user.getEmail(), fullName.trim(), token);
-        return token;
+            String fullName = (user.getFirstName() != null ? user.getFirstName() : "") + " " + (user.getLastName() != null ? user.getLastName() : "");
+            notificationClient.sendPasswordReset(user.getEmail(), fullName.trim(), token);
+        });
     }
 
     public void resetPassword(String token, String password) {
@@ -241,5 +253,25 @@ public class AuthService {
         user.setEmailVerified(true);
         user.setEmailVerificationToken(null);
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+        refreshTokenRepository.deleteByUserId(userId);
+        userRepository.delete(user);
+        log.info("Deleted user id: {} ({}) and cleared associated refresh tokens", userId, user.getEmail());
+    }
+
+    /**
+     * Nightly job: remove revoked and expired refresh tokens to prevent the
+     * refresh_tokens table from growing unbounded.
+     */
+    @Scheduled(cron = "0 0 2 * * *") // 02:00 every day
+    @Transactional
+    public void purgeExpiredRefreshTokens() {
+        int deleted = refreshTokenRepository.deleteExpiredOrRevoked(LocalDateTime.now());
+        log.info("Purged {} expired/revoked refresh tokens", deleted);
     }
 }

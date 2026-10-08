@@ -4,6 +4,7 @@ import com.airline.authservice.dto.AuthResponse;
 import com.airline.authservice.dto.LoginRequest;
 import com.airline.authservice.dto.RefreshTokenRequest;
 import com.airline.authservice.dto.RegisterRequest;
+import com.airline.authservice.entity.Role;
 import com.airline.authservice.entity.User;
 import com.airline.authservice.service.AuthService;
 
@@ -54,27 +55,76 @@ public class AuthController {
     }
 
     @GetMapping("/users")
-    public List<Map<String, Object>> users() {
-        return authService.listUsers();
+    public Map<String, Object> users(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return authService.listUsers(page, size);
     }
 
     @PostMapping("/promote/{userId}")
-    public ResponseEntity<Map<String, Object>> promote(@PathVariable Long userId) {
+    public ResponseEntity<Map<String, Object>> promote(
+            @PathVariable Long userId,
+            @RequestParam(required = false) String role,
+            @RequestBody(required = false) Map<String, String> body) {
 
-        User promoted = authService.promoteToAdmin(userId);
+        Role targetRole = Role.ADMIN;
+        String requestedRole = (body != null && body.get("role") != null) ? body.get("role") : role;
+        if (requestedRole != null && !requestedRole.isBlank()) {
+            targetRole = parseRole(requestedRole);
+        }
+
+        User updated = authService.updateUserRole(userId, targetRole);
 
         return ResponseEntity.ok(
                 Map.of(
-                        "message", "User promoted to ADMIN",
-                        "userId", promoted.getId(),
-                        "email", promoted.getEmail(),
-                        "role", promoted.getRole().name()));
+                        "message", "User role updated to " + updated.getRole().name(),
+                        "userId", updated.getId(),
+                        "email", updated.getEmail(),
+                        "role", updated.getRole().name()));
+    }
+
+    @PutMapping("/users/{userId}/role")
+    public ResponseEntity<Map<String, Object>> updateRole(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> body) {
+        String roleStr = body != null ? body.get("role") : null;
+        if (roleStr == null || roleStr.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Role is required"));
+        }
+        Role targetRole = parseRole(roleStr);
+        User updated = authService.updateUserRole(userId, targetRole);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message", "User role updated successfully",
+                        "userId", updated.getId(),
+                        "email", updated.getEmail(),
+                        "role", updated.getRole().name()));
+    }
+
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Long userId) {
+        authService.deleteUser(userId);
+        return ResponseEntity.ok(
+                Map.of(
+                        "message", "User deleted successfully",
+                        "userId", userId));
+    }
+
+    private Role parseRole(String roleStr) {
+        String normalized = roleStr.trim().toUpperCase();
+        if ("ADMINISTRATOR".equals(normalized)) {
+            return Role.ADMIN;
+        } else if ("USER".equals(normalized) || "CUSTOMER".equals(normalized)) {
+            return Role.PASSENGER;
+        }
+        return Role.valueOf(normalized);
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody EmailRequest request) {
         authService.requestPasswordReset(request.email());
-        // Do not disclose whether an account exists; notification-service delivers the reset link.
+        // Always return 202 regardless of whether the account exists \u2014 authService silently no-ops for unknown emails
         return ResponseEntity.accepted().body(Map.of("message", "If the account exists, a reset email will be sent"));
     }
 

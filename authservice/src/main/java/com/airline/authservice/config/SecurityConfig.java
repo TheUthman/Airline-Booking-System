@@ -23,7 +23,8 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        // Strength 12 is ~4x slower to crack than default 10, imperceptible to users
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
@@ -43,10 +44,13 @@ public class SecurityConfig {
                                                 "/api/auth/verification",
                                                 "/api/auth/verification/confirm")
                                         .permitAll()
-                                        .requestMatchers("/api/auth/promote/**")
+                                        .requestMatchers("/api/auth/promote/**", "/api/auth/users", "/api/auth/users/**")
                                         .hasRole("ADMIN")
-                                        .requestMatchers("/actuator/**")
+                                        // Only expose health/info publicly; sensitive actuator endpoints stay locked
+                                        .requestMatchers("/actuator/health", "/actuator/info")
                                         .permitAll()
+                                        .requestMatchers("/actuator/**")
+                                        .hasRole("ADMIN")
                                         .requestMatchers("/error")
                                         .permitAll()
                                         .anyRequest()
