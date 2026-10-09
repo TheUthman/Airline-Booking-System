@@ -49,6 +49,102 @@ class BookingControllerTest {
     }
 
     @Test
+    void staffCanListFlightBookingsWithoutExposingOwnerEmail() {
+        BookingRepository repository = mock(BookingRepository.class);
+        Booking booking = new Booking();
+        booking.setPnr("ABC123");
+        booking.setPassengerId(5L);
+        booking.setSeatNumber("12A");
+        booking.setCabinClass("ECONOMY");
+        booking.setStatus(BookingStatus.CHECKED_IN);
+        booking.setCheckedInAt(LocalDateTime.now());
+        when(repository.findByFlightIdOrderByCreatedAtAsc(12L)).thenReturn(java.util.List.of(booking));
+        BookingController controller =
+                new BookingController(repository, mock(StringRedisTemplate.class));
+
+        var result = controller.staffFlightManifest(12L, "STAFF");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).pnr()).isEqualTo("ABC123");
+        assertThat(result.get(0).passengerId()).isEqualTo(5L);
+        assertThat(result.get(0).status()).isEqualTo(BookingStatus.CHECKED_IN);
+        assertThat(result.get(0).checkedInAt()).isNotNull();
+    }
+
+    @Test
+    void passengerCannotViewFlightManifest() {
+        BookingController controller =
+                new BookingController(mock(BookingRepository.class), mock(StringRedisTemplate.class));
+
+        assertThatThrownBy(() -> controller.staffFlightManifest(12L, "PASSENGER"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Staff access is required");
+    }
+
+    @Test
+    void staffCheckInPersistsStatusAndTimestamp() {
+        BookingRepository repository = mock(BookingRepository.class);
+        Booking booking = new Booking();
+        booking.setPnr("ABC123");
+        booking.setFlightId(12L);
+        booking.setSeatNumber("12A");
+        booking.setCabinClass("ECONOMY");
+        booking.setAmount(BigDecimal.TEN);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        when(repository.findById(7L)).thenReturn(java.util.Optional.of(booking));
+        when(repository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        BookingController controller =
+                new BookingController(repository, mock(StringRedisTemplate.class));
+
+        BookingController.StaffBookingView result = controller.staffCheckIn(7L, "STAFF");
+
+        assertThat(result.status()).isEqualTo(BookingStatus.CHECKED_IN);
+        assertThat(result.checkedInAt()).isNotNull();
+        verify(repository).save(booking);
+    }
+
+    @Test
+    void passengerCannotUseStaffCheckIn() {
+        BookingController controller =
+                new BookingController(mock(BookingRepository.class), mock(StringRedisTemplate.class));
+
+        assertThatThrownBy(() -> controller.staffCheckIn(7L, "PASSENGER"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Staff access is required");
+    }
+
+    @Test
+    void cannotCheckInUnconfirmedBooking() {
+        BookingRepository repository = mock(BookingRepository.class);
+        Booking booking = new Booking();
+        booking.setStatus(BookingStatus.PENDING_PAYMENT);
+        when(repository.findById(7L)).thenReturn(java.util.Optional.of(booking));
+        BookingController controller =
+                new BookingController(repository, mock(StringRedisTemplate.class));
+
+        assertThatThrownBy(() -> controller.staffCheckIn(7L, "STAFF"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Only confirmed bookings can be checked in");
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void cannotCancelCheckedInBooking() {
+        BookingRepository repository = mock(BookingRepository.class);
+        Booking booking = new Booking();
+        booking.setStatus(BookingStatus.CHECKED_IN);
+        when(repository.findByIdAndOwnerEmail(7L, "traveler@example.com"))
+                .thenReturn(java.util.Optional.of(booking));
+        BookingController controller =
+                new BookingController(repository, mock(StringRedisTemplate.class));
+
+        assertThatThrownBy(() -> controller.cancel(7L, "traveler@example.com"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Confirmed or checked-in bookings");
+        verify(repository, never()).save(any());
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void persistsTheSelectedCabinClass() {
         BookingRepository repository = mock(BookingRepository.class);

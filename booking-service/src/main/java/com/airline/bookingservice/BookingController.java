@@ -46,24 +46,51 @@ public class BookingController {
     StaffBookingView staffLookup(
             @RequestParam @NotBlank String pnr,
             @RequestHeader(value = "X-User-Role", required = false) String role) {
-        if (!"STAFF".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Staff access is required");
-        }
+        requireStaffOrAdmin(role);
 
         Booking booking = repository
                 .findByPnrIgnoreCase(pnr.trim())
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
 
-        return new StaffBookingView(
-                booking.getId(),
-                booking.getPnr(),
-                booking.getFlightId(),
-                booking.getSeatNumber(),
-                booking.getCabinClass(),
-                booking.getAmount(),
-                booking.getStatus(),
-                booking.getCreatedAt());
+        return toStaffBookingView(booking);
+    }
+
+    @GetMapping("/staff/flights/{flightId}/manifest")
+    List<StaffManifestBookingView> staffFlightManifest(
+            @PathVariable @Positive Long flightId,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        requireStaffOrAdmin(role);
+        return repository.findByFlightIdOrderByCreatedAtAsc(flightId).stream()
+                .map(booking -> new StaffManifestBookingView(
+                        booking.getId(),
+                        booking.getPnr(),
+                        booking.getPassengerId(),
+                        booking.getSeatNumber(),
+                        booking.getCabinClass(),
+                        booking.getStatus(),
+                        booking.getCheckedInAt()))
+                .toList();
+    }
+
+    @PostMapping("/{id}/check-in")
+    StaffBookingView staffCheckIn(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        requireStaffOrAdmin(role);
+
+        Booking booking = repository
+                .findById(id)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Only confirmed bookings can be checked in");
+        }
+
+        booking.setStatus(BookingStatus.CHECKED_IN);
+        booking.setCheckedInAt(LocalDateTime.now());
+        return toStaffBookingView(repository.save(booking));
     }
 
     // PNR lookup — optionally cross-checks lastName against the booking owner email as a guard
@@ -178,9 +205,11 @@ public class BookingController {
     @PostMapping("/{id}/cancel")
     Booking cancel(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
         Booking b = one(id, email);
-        if (b.getStatus() == BookingStatus.CONFIRMED)
+        if (b.getStatus() == BookingStatus.CONFIRMED
+                || b.getStatus() == BookingStatus.CHECKED_IN)
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Confirmed bookings must be cancelled through support");
+                    HttpStatus.CONFLICT,
+                    "Confirmed or checked-in bookings must be cancelled through support");
         b.setStatus(BookingStatus.CANCELLED);
         redis.delete("seat-lock:" + b.getFlightId() + ":" + b.getSeatNumber());
         return repository.save(b);
@@ -215,7 +244,36 @@ public class BookingController {
             String cabinClass,
             BigDecimal amount,
             BookingStatus status,
-            LocalDateTime createdAt) {}
+            LocalDateTime createdAt,
+            LocalDateTime checkedInAt) {}
+
+    public record StaffManifestBookingView(
+            Long id,
+            String pnr,
+            Long passengerId,
+            String seatNumber,
+            String cabinClass,
+            BookingStatus status,
+            LocalDateTime checkedInAt) {}
+
+    private static void requireStaffOrAdmin(String role) {
+        if (!"STAFF".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Staff access is required");
+        }
+    }
+
+    private static StaffBookingView toStaffBookingView(Booking booking) {
+        return new StaffBookingView(
+                booking.getId(),
+                booking.getPnr(),
+                booking.getFlightId(),
+                booking.getSeatNumber(),
+                booking.getCabinClass(),
+                booking.getAmount(),
+                booking.getStatus(),
+                booking.getCreatedAt(),
+                booking.getCheckedInAt());
+    }
 
     private String normalizeCabinClass(String cabinClass) {
         String normalized = cabinClass == null || cabinClass.isBlank()

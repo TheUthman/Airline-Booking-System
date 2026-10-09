@@ -40,6 +40,9 @@ public class Booking {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "checked_in_at")
+    private LocalDateTime checkedInAt;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -119,5 +122,13 @@ public class Booking {
 
     public void setCreatedAt(LocalDateTime v) {
         createdAt = v;
+    }
+
+    public LocalDateTime getCheckedInAt() {
+        return checkedInAt;
+    }
+
+    public void setCheckedInAt(LocalDateTime v) {
+        checkedInAt = v;
     }
 }

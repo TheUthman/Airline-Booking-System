@@ -10,4 +10,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
     Optional<Booking> findByPnrIgnoreCase(String pnr);
+
+    List<Booking> findByFlightIdOrderByCreatedAtAsc(Long flightId);
 }

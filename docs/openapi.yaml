@@ -555,9 +555,41 @@ paths:
                   amount: { type: number }
                   status: { type: string }
                   createdAt: { type: string, format: date-time }
+                  checkedInAt: { type: string, format: date-time, nullable: true }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/bookings/{id}/check-in:
+    post:
+      tags: [Bookings]
+      summary: Check in a confirmed booking as staff
+      description: >
+        Requires a STAFF or ADMIN JWT role. Persists CHECKED_IN status and the
+        check-in timestamp. Staff counter check-in is not restricted by the
+        online check-in window.
+      parameters:
+        - { $ref: '#/components/parameters/BookingId' }
+      responses:
+        '200':
+          description: Checked-in booking operations details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer, format: int64 }
+                  pnr: { type: string }
+                  flightId: { type: integer, format: int64 }
+                  seatNumber: { type: string }
+                  cabinClass: { type: string, enum: [ECONOMY, BUSINESS] }
+                  amount: { type: number }
+                  status: { type: string, enum: [CHECKED_IN] }
+                  createdAt: { type: string, format: date-time }
+                  checkedInAt: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /api/bookings/{id}:
     get:
       tags: [Bookings]
@@ -1018,7 +1050,7 @@ components:
         savedTraveler: { type: boolean, default: true }
     BookingStatus:
       type: string
-      enum: [PENDING_PAYMENT, CONFIRMED, CANCELLED, EXPIRED]
+      enum: [PENDING_PAYMENT, CONFIRMED, CHECKED_IN, CANCELLED, EXPIRED]
     Booking:
       type: object
       properties:

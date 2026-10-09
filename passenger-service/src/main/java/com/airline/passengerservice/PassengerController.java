@@ -34,6 +34,19 @@ public class PassengerController {
         return mine(email);
     }
 
+    @PostMapping("/staff/manifest")
+    List<StaffManifestPassengerView> staffManifestPassengers(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @Valid @RequestBody @NotEmpty List<@NotNull @Positive Long> ids) {
+        if (!"STAFF".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Staff access is required");
+        }
+        return repository.findAllById(ids).stream()
+                .map(passenger -> new StaffManifestPassengerView(
+                        passenger.getId(), passenger.getFirstName(), passenger.getLastName()))
+                .toList();
+    }
+
     @GetMapping("/saved-travelers")
     List<Passenger> savedTravelers(@RequestHeader("X-User-Email") String email) {
         return repository.findByOwnerEmail(email).stream().filter(Passenger::isSavedTraveler).toList();
@@ -104,4 +117,6 @@ public class PassengerController {
             String passportNationality,
             LocalDate passportExpiryDate,
             boolean savedTraveler) {}
+
+    public record StaffManifestPassengerView(Long id, String firstName, String lastName) {}
 }
