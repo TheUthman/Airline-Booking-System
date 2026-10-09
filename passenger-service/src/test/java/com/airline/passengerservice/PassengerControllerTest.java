@@ -12,11 +12,10 @@ class PassengerControllerTest {
     @Test
     void staffManifestReturnsOnlyPassengerNames() {
         PassengerRepository repository = mock(PassengerRepository.class);
-        Passenger passenger = new Passenger();
-        passenger.setFirstName("Ada");
-        passenger.setLastName("Lovelace");
-        passenger.setOwnerEmail("private@example.com");
-        passenger.setDocumentNumber("PRIVATE-DOCUMENT");
+        Passenger passenger = mock(Passenger.class);
+        when(passenger.getId()).thenReturn(5L);
+        when(passenger.getFirstName()).thenReturn("Ada");
+        when(passenger.getLastName()).thenReturn("Lovelace");
         when(repository.findAllById(List.of(5L))).thenReturn(List.of(passenger));
         PassengerController controller = new PassengerController(repository);
 
@@ -24,7 +23,7 @@ class PassengerControllerTest {
 
         assertThat(result).containsExactly(
                 new PassengerController.StaffManifestPassengerView(
-                        passenger.getId(), "Ada", "Lovelace"));
+                        5L, "Ada", "Lovelace"));
         verify(repository).findAllById(List.of(5L));
     }
 

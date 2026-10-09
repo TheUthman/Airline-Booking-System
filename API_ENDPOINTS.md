@@ -18,6 +18,7 @@ This document lists every HTTP endpoint exposed by the micro-services in the rep
 | `GET /api/flights/**` (search, by id) | Public |
 | `GET /fallback/flight-service`, `/actuator/**`, `OPTIONS /**` | Public |
 | `/api/auth/promote/**` / `/api/flights/admin/**` / `/api/admin/**` | **ADMIN** only |
+| `/api/bookings/staff/**` and `POST /api/passengers/staff/**` | **STAFF or ADMIN** only; these staff routes are exceptions to the authenticated-only default below |
 | Everything else (`/api/passengers/**`, `/api/bookings/**`, `POST /api/pricing/quote`, payment history/refund/invoice, `/api/notifications/**`) | Authenticated (Bearer token) |
 
 > `POST /api/payments/initiate` is reachable without a token at the gateway, but the payer is taken from `X-User-Email` (injected from the JWT), so a Bearer token is still required for the payment to belong to a real account.
@@ -49,6 +50,7 @@ Pricing rules: departures within 3 days add 35%; 4-14 days add 15%; flights 65% 
 |--------|-----|-------------|--------------|------------------|
 | `GET` | `/api/passengers/me` | List the caller's traveller profiles. | - | `200 OK` -> list of passenger objects |
 | `GET` | `/api/passengers/saved-travelers` | List only the caller's travellers flagged as saved. | - | `200 OK` -> list of passenger objects |
+| `POST` | `/api/passengers/staff/manifest` | **STAFF or ADMIN** - return passenger names only for supplied passenger IDs. | `[123,456]` | `200 OK` -> list of `{ "id", "firstName", "lastName" }` |
 | `POST` | `/api/passengers` | Create a traveller profile. | `{ "firstName":"...","lastName":"...","dateOfBirth":"YYYY-MM-DD","phone":"...","documentNumber":"...","passportNationality":"...","passportExpiryDate":"YYYY-MM-DD","savedTraveler":true }` | `201 Created` -> created passenger object |
 | `PUT` | `/api/passengers/{id}` | Update a passenger (owner only). | Same shape as POST | `200 OK` -> updated passenger |
 | `POST` | `/api/passengers/{id}/points` | Add frequent-flyer points to a passenger (owner only). | Query param `points` (>= 1) | `200 OK` -> updated passenger with new `frequentFlyerPoints` |
@@ -65,8 +67,9 @@ Passenger object: `{ "id", "ownerEmail", "firstName", "lastName", "dateOfBirth",
 | `POST` | `/api/bookings/group` | Create one pending booking per traveller (each seat locked independently). Each traveler may include `cabinClass`. | `{ "flightId":123,"travelers":[ { "passengerId":1,"seatNumber":"12A","amount":199.99,"cabinClass":"ECONOMY" } ] }` | `201 Created` -> list of bookings |
 | `POST` | `/api/bookings/{id}/upgrade` | Change a pending booking's seat and add the price difference. | Query params `seatNumber` and `additionalAmount` | `200 OK` -> updated booking |
 | `POST` | `/api/bookings/{id}/cancel` | Cancel a pending booking (confirmed bookings require support). | - | `200 OK` -> booking with status `CANCELLED` |
+| `GET` | `/api/bookings/staff/flights/{flightId}/manifest` | **STAFF or ADMIN** - list passenger IDs and booking/check-in details for a flight. | - | `200 OK` -> list of limited manifest booking records |
 
-Booking object: `{ "id", "pnr", "ownerEmail", "flightId", "passengerId", "seatNumber", "cabinClass" ("ECONOMY"|"BUSINESS"), "amount", "status" ("PENDING_PAYMENT"|"CONFIRMED"|"CANCELLED"|"EXPIRED"), "createdAt" }`
+Booking object: `{ "id", "pnr", "ownerEmail", "flightId", "passengerId", "seatNumber", "cabinClass" ("ECONOMY"|"BUSINESS"), "amount", "status" ("PENDING_PAYMENT"|"CONFIRMED"|"CHECKED_IN"|"CANCELLED"|"EXPIRED"), "createdAt", "checkedInAt" }`
 
 ## Payment Service (`payment-service`)
 
