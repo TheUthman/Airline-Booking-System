@@ -24,3 +24,15 @@ management:
     web:
       exposure:
         include: health,info
+
+# Illustrative defaults for the cost-based fare estimate. Calibrate with reliable operational data.
+pricing:
+  estimate:
+    fuel-price-per-litre: ${FUEL_PRICE_PER_LITRE:950}
+    route-distance-factor: ${ROUTE_DISTANCE_FACTOR:1.12}
+    taxi-and-overhead-hours: ${TAXI_AND_OVERHEAD_HOURS:0.50}
+    crew-cost-per-flight: ${CREW_COST_PER_FLIGHT:120000}
+    load-factor: ${EXPECTED_LOAD_FACTOR:0.75}
+    target-profit-margin: ${TARGET_PROFIT_MARGIN:0.10}
+    other-revenue-per-flight: ${OTHER_REVENUE_PER_FLIGHT:0}
+    business-fare-multiplier: ${BUSINESS_FARE_MULTIPLIER:3.0}

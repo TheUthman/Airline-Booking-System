@@ -1,3 +1,6 @@
 package com.airline.flightservice;
 import org.springframework.data.jpa.repository.JpaRepository;
-public interface AirportRepository extends JpaRepository<Airport, Long> {}
+import java.util.Optional;
+public interface AirportRepository extends JpaRepository<Airport, Long> {
+    Optional<Airport> findByCodeIgnoreCase(String code);
+}

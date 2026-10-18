@@ -1,5 +1,7 @@
 # Airline Booking System Backend
 
+This repository contains a
+
 Spring Boot microservices implementation of the supplied architecture guide. The gateway is the only backend URL a frontend should call.
 
 The root `pom.xml` is a Maven aggregator, so you can compile all services from the project root with `mvn compile` or package them with `mvn package`.
@@ -61,3 +63,8 @@ The webhook endpoint is intentionally not a frontend endpoint. Replace the devel
 - `/api/flights/admin/**` and `/api/admin/**` require the `ADMIN` role.
 - The gateway forwards authenticated identity as internal headers. Keep business-service ports private in production so callers cannot forge those headers.
 - Store production secrets in deployment environment settings, not in this repository.
+
+
+## Cost-based flight pricing
+
+The backend includes an initial automatic fare estimator based on airport coordinates, aircraft fuel consumption, cruise speed, operating/maintenance costs, airport charges, expected occupancy and target margin. Start with `PRICING_ENGINE_IMPLEMENTATION.md` to configure aircraft and airport records and test `POST /api/flights/admin/fare-estimate`. Default cost settings are illustrative; calibrate them before real-world use.

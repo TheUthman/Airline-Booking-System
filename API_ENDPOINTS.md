@@ -40,7 +40,7 @@ This document lists every HTTP endpoint exposed by the micro-services in the rep
 
 | Method | URL | Description | Request Body | Success Response |
 |--------|-----|-------------|--------------|------------------|
-| `POST` | `/api/pricing/quote` | Calculate a dynamic quote without changing the stored cabin base fare (advance-purchase, load-factor, promo-code and frequent-flyer-point rules). | `{ "flightId":123,"baseFare":199.99,"departureDate":"2026-10-01","availableSeats":30,"totalSeats":180,"cabin":"ECONOMY","promoCode":"WELCOME10","frequentFlyerPoints":500 }` | `200 OK` -> `{ "flightId":123,"cabin":"ECONOMY","baseFare":199.99,"multiplier":1.0,"promoDiscount":19.99,"frequentFlyerPointsDiscount":5.00,"total":175.00,"appliedRules":["..."] }` |
+| `POST` | `/api/pricing/quote` | Calculate a dynamic quote using the authoritative fare and inventory fetched from Flight Service (advance-purchase, load-factor, promo-code and frequent-flyer-point rules). Only `flightId` and `cabin` are required for pricing; legacy baseFare/date/seat fields are ignored. | `{ "flightId":123,"cabin":"ECONOMY","promoCode":"WELCOME10","frequentFlyerPoints":500 }` | `200 OK` -> `{ "flightId":123,"cabin":"ECONOMY","baseFare":199.99,"multiplier":1.0,"promoDiscount":19.99,"frequentFlyerPointsDiscount":5.00,"total":175.00,"appliedRules":["..."] }` |
 
 Pricing rules: departures within 3 days add 35%; 4-14 days add 15%; flights 65% / 85%+ occupied add 10% / 25%. Cabin multipliers are not applied: Flight Service supplies the independently managed Economy or Business base fare. `WELCOME10` grants 10%, and every 100 frequent-flyer points offsets one currency unit (capped at 100).
 
@@ -189,3 +189,16 @@ curl -X POST http://localhost:8080/api/payments/initiate \
 ---
 
 *This file is generated for documentation purposes and kept up-to-date manually. Feel free to add more endpoints as the project evolves.*
+
+
+## Cost-based flight pricing additions
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/flights/admin/fare-estimate` | Preview an automatic cost-based fare. Body: `{ "origin":"LOS", "destination":"ABV", "aircraftCode":"TA-100" }`. |
+| `POST` | `/api/flights/admin/airports` | Create an airport including optional `latitude`, `longitude`, and `estimatedAirportCharge`. |
+| `PUT` | `/api/flights/admin/airports/{id}` | Update airport data. Coordinates are required for fare estimates. |
+| `POST` | `/api/flights/admin/aircraft` | Create an aircraft including `fuelConsumptionLitresPerHour`, `cruiseSpeedKmh`, `operatingCostPerHour`, and `maintenanceCostPerHour`. |
+| `PUT` | `/api/flights/admin/aircraft/{id}` | Update aircraft specifications. |
+
+Flight creation now calculates fares by default when `manualFareOverride` is omitted or false. To deliberately use a manually entered fare, send `manualFareOverride: true` and a positive `fare`. See `PRICING_ENGINE_IMPLEMENTATION.md` for sample payloads, assumptions, and setup steps.

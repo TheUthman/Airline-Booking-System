@@ -9,16 +9,25 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/flights")
 public class FlightController {
     private final FlightRepository flights;
     private final AirportRepository airports;
+    private final CostBasedFareCalculator fareCalculator;
+    private final AircraftRepository aircraft;
 
-    FlightController(FlightRepository flights, AirportRepository airports) {
+    FlightController(
+            FlightRepository flights,
+            AirportRepository airports,
+            CostBasedFareCalculator fareCalculator,
+            AircraftRepository aircraft) {
         this.flights = flights;
         this.airports = airports;
+        this.fareCalculator = fareCalculator;
+        this.aircraft = aircraft;
     }
 
     @GetMapping
@@ -55,6 +64,11 @@ public class FlightController {
     @GetMapping("/{id}")
     public Flight one(@PathVariable Long id) {
         return flights.findById(id).orElseThrow(() -> new FlightNotFoundException(id));
+    }
+
+    @PostMapping("/admin/fare-estimate")
+    public FareEstimate estimateFare(@Valid @RequestBody FareEstimateRequest request) {
+        return fareCalculator.estimate(request.origin(), request.destination(), request.aircraftCode());
     }
 
     @PostMapping("/admin")
@@ -96,12 +110,31 @@ public class FlightController {
         f.setDestination(r.destination().toUpperCase());
         f.setDepartureTime(r.departureTime());
         f.setArrivalTime(r.arrivalTime());
-        f.setFare(r.fare());
-        f.setBusinessFare(r.businessFare());
+        // If no fare is supplied, derive both cabin fares from the cost model.
+        // Admin clients should omit fare/businessFare to use automatic pricing.
+        if (!r.manualFareOverride()) {
+            FareEstimate estimate = fareCalculator.estimate(r.origin(), r.destination(), r.aircraftCode());
+            f.setFare(estimate.suggestedEconomyBaseFare());
+            f.setBusinessFare(estimate.suggestedBusinessBaseFare());
+        } else {
+            if (r.fare() == null) {
+                throw new IllegalArgumentException("fare is required when manualFareOverride is true.");
+            }
+            f.setFare(r.fare());
+            f.setBusinessFare(r.businessFare() == null
+                    ? r.fare().multiply(new BigDecimal("3.0")).setScale(2, java.math.RoundingMode.HALF_UP)
+                    : r.businessFare());
+        }
+        Aircraft selectedAircraft = aircraft.findByCodeIgnoreCase(r.aircraftCode().trim())
+                .orElseThrow(() -> new IllegalArgumentException("Aircraft was not found: " + r.aircraftCode()));
+        if (r.availableSeats() > selectedAircraft.getSeatCapacity()) {
+            throw new IllegalArgumentException("Available seats cannot exceed the selected aircraft capacity.");
+        }
         f.setAvailableSeats(r.availableSeats());
-        f.setTotalSeats(r.totalSeats());
+        // Aircraft catalogue is the source of truth for total seat capacity.
+        f.setTotalSeats(selectedAircraft.getSeatCapacity());
         f.setAirline(r.airline());
-        f.setAircraftCode(r.aircraftCode());
+        f.setAircraftCode(selectedAircraft.getCode());
     }
 
     record FlightRequest(
@@ -110,12 +143,23 @@ public class FlightController {
             @Pattern(regexp = "[A-Za-z]{3}") String destination,
             @NotNull LocalDateTime departureTime,
             @NotNull LocalDateTime arrivalTime,
-            @NotNull @PositiveOrZero BigDecimal fare,
+            @PositiveOrZero BigDecimal fare,
             @PositiveOrZero BigDecimal businessFare,
             @Min(0) int availableSeats,
             @Min(1) int totalSeats,
             @NotBlank String airline,
-            String aircraftCode) {}
+            @NotBlank String aircraftCode,
+            boolean manualFareOverride) {}
+
+    record FareEstimateRequest(
+            @NotBlank @Pattern(regexp = "[A-Za-z]{3}") String origin,
+            @NotBlank @Pattern(regexp = "[A-Za-z]{3}") String destination,
+            @NotBlank String aircraftCode) {}
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> badRequest(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(Map.of("error", exception.getMessage()));
+    }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     static class FlightNotFoundException extends RuntimeException {

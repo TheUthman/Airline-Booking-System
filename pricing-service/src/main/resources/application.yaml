@@ -4,3 +4,7 @@ spring:
 server: { port: 8089 }
 eureka: { client: { service-url: { defaultZone: "${EUREKA_URL:http://localhost:8761/eureka/}" } } }
 management: { endpoints: { web: { exposure: { include: health,info } } } }
+
+# Direct URL for the Flight Service. In Docker, set FLIGHT_SERVICE_URL=http://flight-service:8083.
+app:
+  flight-service-url: ${FLIGHT_SERVICE_URL:http://localhost:8083}
